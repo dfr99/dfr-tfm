@@ -32,7 +32,7 @@ permissions:
 
 
 jobs:
-  validate-terraform:
+  ValidateTerraform:
     runs-on: self-hosted
     defaults:
       run:
