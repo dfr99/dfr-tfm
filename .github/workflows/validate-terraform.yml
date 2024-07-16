@@ -6,7 +6,7 @@ on:
     types: [opened, synchronize, reopened, labeled]
     paths:
       - 'code/terraform/**'
-  
+
   workflow_dispatch:
     inputs:
       proyect:
@@ -21,8 +21,8 @@ on:
 
 
 env:
-  AWS_REGION : ${{ vars.AWS_REGION }}
-  AWS_ROLE_ARN : ${{ secrets.AWS_ROLE_ARN }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
 
 permissions:
