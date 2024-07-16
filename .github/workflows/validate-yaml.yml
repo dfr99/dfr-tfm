@@ -1,0 +1,30 @@
+---
+name: 'YAML Lint'
+
+on:
+  pull_request:
+    paths:
+      - '**/*.yaml'
+      - '**/*.yml'
+
+env:
+  GH_PAT: ${{ secrets.GH_PAT }}
+
+jobs:
+  yamllint:
+    name: 'Yamllint'
+    runs-on: self-hosted
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: 'Yamllint'
+        uses: karancode/yamllint-github-action@master
+        with:
+          yamllint_config_filepath: .yamllint
+          yamllint_comment: true
+        env:
+          GITHUB_ACCESS_TOKEN: ${{ env.GH_PAT }}
