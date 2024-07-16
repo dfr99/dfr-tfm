@@ -7,10 +7,10 @@ on:
   workflow_dispatch:
 
 env:
-  AWS_REGION : ${{ vars.AWS_REGION }}
-  AWS_ROLE_ARN : ${{ secrets.AWS_ROLE_ARN }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
-# Permission can be added at job level or workflow level    
+# Permission can be added at job level or workflow level
 permissions:
   id-token: write   # This is required for requesting the JWT
   contents: read    # This is required for actions/checkout
