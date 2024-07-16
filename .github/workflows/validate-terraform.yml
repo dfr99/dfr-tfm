@@ -1,0 +1,67 @@
+---
+name: Terraform Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - 'code/terraform/**'
+  
+  workflow_dispatch:
+    inputs:
+      proyect:
+        description: "Select the Terraform project to validate."
+        required: true
+        type: choice
+        options:
+          - nextcloud
+          - oidc-github-actions/iam_role
+          - oidc-github-actions/identity_provider
+          - opstimizer
+
+
+env:
+  AWS_REGION : ${{ vars.AWS_REGION }}
+  AWS_ROLE_ARN : ${{ secrets.AWS_ROLE_ARN }}
+
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+
+jobs:
+  validate-terraform:
+    runs-on: self-hosted
+    defaults:
+      run:
+        working-directory: code/terraform/${{ inputs.proyect }}
+
+    steps:
+      - name: Git clone the repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: "${{ env.AWS_ROLE_ARN }}"
+          role-session-name: dfr-tfm-terraform-validate
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.8.5"
+
+      - name: Terraform fmt
+        id: fmt
+        run: terraform fmt -check -no-color
+
+      - name: Terraform init
+        id: init
+        run: terraform init -no-color
+
+      - name: Terraform validate
+        id: validate
+        run: terraform validate -no-color
