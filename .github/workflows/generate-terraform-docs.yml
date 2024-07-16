@@ -9,6 +9,10 @@ on:
 
   workflow_dispatch:
 
+env:
+  GH_PAT: ${{ secrets.GH_PAT }}
+  TF_PROJECTS: ${{ vars.TF_PROJECTS }}
+
 jobs:
   TerraformDocs:
     runs-on: self-hosted
@@ -26,4 +30,4 @@ jobs:
           git-push-sign-off: "true"
           git-commit-message: "terraform-docs[bot]: update terraform docs"
           config-file: code/terraform/.terraform-docs.yml
-          working-dir: code/terraform/oidc-github-actions/iam_role, code/terraform/oidc-github-actions/identity_provider
+          working-dir: ${{ env.TF_PROJECTS }}
