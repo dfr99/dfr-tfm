@@ -1,0 +1,33 @@
+---
+name: Generate Terraform Docs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - 'code/terraform/**'
+
+  workflow_dispatch:
+
+env:
+  GH_PAT: ${{ secrets.GH_PAT }}
+  TF_PROJECTS: ${{ vars.TF_PROJECTS }}
+
+jobs:
+  TerraformDocs:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Render terraform docs and push changes back to PR
+        uses: terraform-docs/gh-actions@v1.2.0
+        with:
+          git-push: "true"
+          git-push-sign-off: "true"
+          git-commit-message: "terraform-docs[bot]: update terraform docs"
+          config-file: code/terraform/.terraform-docs.yml
+          working-dir: ${{ env.TF_PROJECTS }}
