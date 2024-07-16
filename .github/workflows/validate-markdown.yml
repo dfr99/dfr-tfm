@@ -1,0 +1,26 @@
+---
+name: 'Markdown Lint'
+
+on:
+  pull_request:
+    paths:
+      - '**/*.md'
+
+env:
+  GH_PAT: ${{ secrets.GH_PAT }}
+
+jobs:
+  markdownlint:
+    name: 'Markdown Lint'
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+    
+      - name: markdownlint-cli2-action
+        uses: DavidAnson/markdownlint-cli2-action@v9
+        with:
+          globs: '**/*.md'
