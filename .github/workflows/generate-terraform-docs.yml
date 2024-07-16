@@ -22,6 +22,8 @@ jobs:
       - name: Render terraform docs and push changes back to PR
         uses: terraform-docs/gh-actions@v1.2.0
         with:
+          git-push: "true"
           git-push-sign-off: "true"
+          git-commit-message: "terraform-docs[bot]: update terraform docs"
           config-file: code/terraform/.terraform-docs.yml
           working-dir: code/terraform/oidc-github-actions/iam_role, code/terraform/oidc-github-actions/identity_provider
