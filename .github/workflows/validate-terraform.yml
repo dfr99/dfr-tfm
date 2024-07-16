@@ -5,7 +5,7 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
     paths:
-      - 'code/terraform/**'
+      - 'code/terraform/**/*.tf'
 
   workflow_dispatch:
     inputs:
@@ -19,17 +19,14 @@ on:
           - oidc-github-actions/identity_provider
           - opstimizer
 
-
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
-
 
 permissions:
   id-token: write
   contents: read
   pull-requests: write
-
 
 jobs:
   ValidateTerraform:
@@ -39,10 +36,12 @@ jobs:
         working-directory: code/terraform/${{ inputs.proyect }}
 
     steps:
-      - name: Git clone the repository
+      - name: Checkout repository
+        id: checkout
         uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
+        id: configure-aws-credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: "${{ env.AWS_ROLE_ARN }}"
@@ -50,11 +49,12 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Set up Terraform
+        id: setup-terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.8.5"
 
-      - name: Terraform fmt
+      - name: Terraform format
         id: fmt
         run: terraform fmt -check -no-color
 
