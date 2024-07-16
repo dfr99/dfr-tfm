@@ -32,3 +32,6 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Add self-hosted runner files
+actions-runner
