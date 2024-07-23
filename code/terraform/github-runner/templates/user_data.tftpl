@@ -1,0 +1,18 @@
+#!/bin/bash
+
+sudo -u ubuntu -i <<'EOF'
+
+export RUNNER_CFG_PAT="${gh_pat}"
+
+curl -s https://raw.githubusercontent.com/actions/runner/main/scripts/create-latest-svc.sh > ./create-latest-svc.sh
+chmod +x ./create-latest-svc.sh
+
+./create-latest-svc.sh \
+    -s dfr99/dfr-tfm \
+    -n dfr-tfm-aws \
+    -l aws,${aws_account},${aws_region},ec2
+
+rm -rf ./*.tar.gz
+rm -rf ./create-latest-svc.sh
+
+EOF
