@@ -2,6 +2,14 @@
 
 sudo -u ubuntu -i <<'EOF'
 
+sudo apt update
+sudo apt install unzip git -y
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+rm -rf ./aws
+
 export RUNNER_CFG_PAT="${gh_pat}"
 
 curl -s https://raw.githubusercontent.com/actions/runner/main/scripts/create-latest-svc.sh > ./create-latest-svc.sh
