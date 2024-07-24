@@ -48,8 +48,12 @@ jobs:
 
       - name: Terraform plan
         id: plan
-        run: terraform plan -out="./github-runner-plan" -no-color
+        run: |
+          export TF_VAR_gh_pat="${{ env.GH_PAT }}"
+          terraform plan -out="./github-runner-plan" -no-color
 
       - name: Terraform apply
         id: apply
-        run: terraform apply ./github-runner-plan -auto-approve -no-color
+        run: |
+          export TF_VAR_gh_pat="${{ env.GH_PAT }}"
+          terraform apply ./github-runner-plan -auto-approve -no-color
