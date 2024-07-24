@@ -48,6 +48,10 @@ jobs:
           role-session-name: dfr-tfm-terraform-validate
           aws-region: ${{ env.AWS_REGION }}
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.3.0
+
       - name: Set up Terraform
         id: setup-terraform
         uses: hashicorp/setup-terraform@v3
