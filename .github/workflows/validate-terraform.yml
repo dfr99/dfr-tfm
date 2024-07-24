@@ -15,6 +15,7 @@ on:
         type: choice
         options:
           - nextcloud
+          - github-runner
           - oidc-github-actions/iam_role
           - oidc-github-actions/identity_provider
           - opstimizer
