@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  deploy:
+  destroy:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -48,4 +48,6 @@ jobs:
 
       - name: Terraform destroy
         id: destroy
-        run: terraform destroy -auto-approve -no-color
+        run: |
+          export TF_VAR_gh_pat="${{ env.GH_PAT }}"
+          terraform destroy -auto-approve -no-color
