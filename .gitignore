@@ -33,5 +33,5 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-# Add self-hosted runner files
-actions-runner
+# Plans folder
+**/plans/*
