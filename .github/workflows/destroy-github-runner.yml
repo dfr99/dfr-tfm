@@ -1,26 +1,11 @@
 ---
-name: Terraform Validation
+name: Destroy GitHub Runner
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened, labeled]
-    paths:
-      - 'code/terraform/**/*.tf'
-
   workflow_dispatch:
-    inputs:
-      proyect:
-        description: "Select the Terraform project to validate."
-        required: true
-        type: choice
-        options:
-          - nextcloud
-          - github-runner
-          - oidc-github-actions/iam_role
-          - oidc-github-actions/identity_provider
-          - opstimizer
 
 env:
+  GH_PAT: ${{ secrets.GH_PAT }}
   AWS_REGION: ${{ vars.AWS_REGION }}
   AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
@@ -29,15 +14,14 @@ permissions:
   contents: read
 
 jobs:
-  ValidateTerraform:
-    runs-on: self-hosted
+  destroy:
+    runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: code/terraform/${{ inputs.proyect }}
+        working-directory: code/terraform/github-runner
 
     steps:
       - name: Checkout repository
-        id: checkout
         uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
@@ -58,14 +42,12 @@ jobs:
         with:
           terraform_version: "1.8.5"
 
-      - name: Terraform format
-        id: fmt
-        run: terraform fmt -check -no-color
-
       - name: Terraform init
         id: init
         run: terraform init -no-color
 
-      - name: Terraform validate
-        id: validate
-        run: terraform validate -no-color
+      - name: Terraform destroy
+        id: destroy
+        run: |
+          export TF_VAR_gh_pat="${{ env.GH_PAT }}"
+          terraform destroy -auto-approve -no-color

@@ -1,0 +1,43 @@
+#!/bin/bash
+
+sudo -u ubuntu -i <<'EOF'
+
+sudo apt update
+sudo apt install -y unzip git ca-certificates curl
+
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
+rm -rf ./aws ./awscliv2.zip
+
+for pkg in docker.io docker-doc docker-compose docker-compose-v2 podman-docker containerd runc; do 
+    sudo apt-get remove $pkg; 
+done
+
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo usermod -aG docker ubuntu
+
+export RUNNER_CFG_PAT="${gh_pat}"
+
+curl -s https://raw.githubusercontent.com/actions/runner/main/scripts/create-latest-svc.sh > ./create-latest-svc.sh
+chmod +x ./create-latest-svc.sh
+
+./create-latest-svc.sh \
+    -s dfr99/dfr-tfm \
+    -n dfr-tfm-aws \
+    -l aws,${aws_account},${aws_region},ec2
+
+rm -rf ./*.tar.gz
+rm -rf ./create-latest-svc.sh
+
+EOF
