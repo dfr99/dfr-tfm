@@ -6,7 +6,7 @@ on:
 
 env:
   GH_PAT: ${{ secrets.GH_PAT }}
-  AWS_REGION: ${{ vars.AWS_REGION }} 
+  AWS_REGION: ${{ vars.AWS_REGION }}
   AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
 jobs:
@@ -37,15 +37,11 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.8.5"
-      
+
       - name: Terraform init
         id: init
         run: terraform init -no-color
 
-      - name: Terraform plan
-        id: plan
-        run: terraform plan -out="./github-runner-plan" -no-color
-
-      - name: Terraform apply
-        id: apply
-        run: terraform apply ./github-runner-plan -auto-approve -no-color
+      - name: Terraform destroy
+        id: destroy
+        run: terraform destroy -auto-approve -no-color

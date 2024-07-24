@@ -6,7 +6,7 @@ on:
 
 env:
   GH_PAT: ${{ secrets.GH_PAT }}
-  AWS_REGION: ${{ vars.AWS_REGION }} 
+  AWS_REGION: ${{ vars.AWS_REGION }}
   AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
 
 jobs:
@@ -37,7 +37,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.8.5"
-      
+
       - name: Terraform init
         id: init
         run: terraform init -no-color
