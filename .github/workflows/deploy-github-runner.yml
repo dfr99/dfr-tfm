@@ -56,4 +56,4 @@ jobs:
         id: apply
         run: |
           export TF_VAR_gh_pat="${{ env.GH_PAT }}"
-          terraform apply ./github-runner-plan -auto-approve -no-color
+          terraform apply ./github-runner-plan -no-color
