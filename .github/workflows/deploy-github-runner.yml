@@ -1,0 +1,51 @@
+---
+name: Deploy GitHub Runner
+
+on:
+  workflow_dispatch:
+
+env:
+  GH_PAT: ${{ secrets.GH_PAT }}
+  AWS_REGION: ${{ vars.AWS_REGION }} 
+  AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: code/terraform/github-runner
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        id: configure-aws-credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: "${{ env.AWS_ROLE_ARN }}"
+          role-session-name: dfr-tfm-terraform-validate
+          aws-region: ${{ env.AWS_REGION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.3.0
+
+      - name: Set up Terraform
+        id: setup-terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.8.5"
+      
+      - name: Terraform init
+        id: init
+        run: terraform init -no-color
+
+      - name: Terraform plan
+        id: plan
+        run: terraform plan -out="./github-runner-plan" -no-color
+
+      - name: Terraform apply
+        id: apply
+        run: terraform apply ./github-runner-plan -auto-approve -no-color
