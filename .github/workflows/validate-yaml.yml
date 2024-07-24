@@ -10,6 +10,9 @@ on:
 env:
   GH_PAT: ${{ secrets.GH_PAT }}
 
+permissions:
+  contents: read
+
 jobs:
   yamllint:
     name: 'Yamllint'
