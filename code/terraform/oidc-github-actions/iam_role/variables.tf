@@ -15,8 +15,8 @@ variable "repository" {
   sensitive   = false
 
   validation {
-    condition     = can(regex("^repo:", var.repository))
-    error_message = "The repository must be valid. Syntax is \"repo:<owner>/<repository_name>:ref:<branch_name>\"."
+    condition     = can(regex("^[0-9a-zA-Z\\/\\-\\_]", var.repository))
+    error_message = "The repository must be valid. Syntax is \"<owner>/<repository_name>\"."
   }
 }
 
