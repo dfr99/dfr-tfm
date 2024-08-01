@@ -16,3 +16,10 @@ repos:
         args: [
           "-d", "./code/terraform/", "--quiet"
         ]
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.29.0
+    hooks:
+      - id: yamllint
+        args: [
+          "-c", ".yamllint"
+        ]
