@@ -13,11 +13,11 @@ repos:
           - --args=-no-color
           - --args=-json
       - id: terraform_checkov
-        args: [
-          "-d", "./code/terraform/", "--quiet"
-        ]
+        args:
+          - --args=--quiet
+          - --args=--directory=./code/terraform
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.29.0
+    rev: v1.35.1
     hooks:
       - id: yamllint
         args: [
