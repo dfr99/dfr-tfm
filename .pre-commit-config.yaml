@@ -1,0 +1,25 @@
+---
+repos:
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.92.0
+    hooks:
+      - id: terraform_fmt
+        args:
+          - --args=-no-color
+          - --args=-diff
+          - --args=-write=false
+      - id: terraform_validate
+        args:
+          - --args=-no-color
+          - --args=-json
+      - id: terraform_checkov
+        args: [
+          "-d", "./code/terraform/", "--quiet"
+        ]
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.29.0
+    hooks:
+      - id: yamllint
+        args: [
+          "-c", ".yamllint"
+        ]
