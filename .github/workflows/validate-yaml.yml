@@ -17,15 +17,16 @@ jobs:
   yamllint:
     name: 'Yamllint'
     runs-on: self-hosted
+    timeout-minutes: 30
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
       - name: 'Yamllint'
-        uses: karancode/yamllint-github-action@master
+        uses: karancode/yamllint-github-action@fdef6bc189425ecc84cc4543b2674566c0827053
         with:
           yamllint_config_filepath: .yamllint
           yamllint_comment: true

@@ -15,30 +15,32 @@ permissions:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    name: "Deploy GitHub Runner"
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
     defaults:
       run:
         working-directory: code/terraform/github-runner
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
 
       - name: Configure AWS Credentials
         id: configure-aws-credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         with:
           role-to-assume: "${{ env.AWS_ROLE_ARN }}"
           role-session-name: dfr-tfm-terraform-validate
           aws-region: ${{ env.AWS_REGION }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
         with:
           node-version: 22.3.0
 
       - name: Set up Terraform
         id: setup-terraform
-        uses: hashicorp/setup-terraform@v3
+        uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8
         with:
           terraform_version: "1.8.5"
 
