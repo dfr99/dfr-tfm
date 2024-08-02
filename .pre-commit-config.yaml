@@ -16,6 +16,7 @@ repos:
         args:
           - --args=--quiet
           - --args=--directory=./code/terraform
+          - --args=--download-external-modules true
   - repo: https://github.com/adrienverge/yamllint.git
     rev: v1.35.1
     hooks:

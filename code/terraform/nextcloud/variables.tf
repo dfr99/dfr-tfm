@@ -1,6 +1,12 @@
 variable "prefix" {
   type        = string
   description = "value to be prefixed to all resources"
-  default     = "dfr-tfm"
+  default     = "nextcloud"
   sensitive   = false
+}
+
+variable "rds_password" {
+  type        = string
+  description = "password for the RDS instance"
+  sensitive   = true
 }

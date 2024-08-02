@@ -34,7 +34,10 @@ override.tf.json
 terraform.rc
 
 # Plans folder
-**/plans/*
+**/plans/
 
 # Python virtual environment
 venv/
+
+# Certificates folder
+**/certs/
