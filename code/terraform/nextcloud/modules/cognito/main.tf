@@ -97,7 +97,7 @@ resource "aws_cognito_user_pool" "pool" {
 
 # TODO: https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cognito_user
 resource "aws_cognito_user" "users" {
-  count       = length(var.cognito_user_usernames)
+  count        = length(var.cognito_user_usernames)
   user_pool_id = aws_cognito_user_pool.pool.id
   username     = var.cognito_user_usernames[count.index]["username"]
 

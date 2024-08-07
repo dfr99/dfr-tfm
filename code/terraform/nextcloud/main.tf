@@ -11,9 +11,9 @@ module "vpc" {
   enable_nat_gateway = true
 
   flow_log_cloudwatch_log_group_class             = "INFREQUENT_ACCESS"
-  flow_log_cloudwatch_log_group_retention_in_days = 30
+  flow_log_cloudwatch_log_group_retention_in_days = 365
   flow_log_cloudwatch_log_group_skip_destroy      = true
-  flow_log_destination_type                       = "cloudwatch-logs"
+  flow_log_destination_type                       = "cloud-watch-logs"
   flow_log_max_aggregation_interval               = 60
   flow_log_file_format                            = "plain-text"
   flow_log_traffic_type                           = "ALL"
@@ -52,31 +52,91 @@ module "vpc" {
   vpc_flow_log_iam_role_name   = "${var.prefix}-vpc-flow-log-iam-role"
 }
 
-module "ec2_security_group" {
-  source = "git::https://github.com/terraform-aws-modules/terraform-aws-security-group.git?ref=20e107f1658bc5c8b23efce2e17406e74e6cbeae"
+###############################################################################
 
+# TODO: Add the module for the security group
+
+resource "aws_security_group" "ec2_security_group" {
   name        = "${var.prefix}-ec2-sg"
   description = "Security group for NextCloud EC2 instance"
   vpc_id      = module.vpc.vpc_id
-
-  ingress_cidr_blocks = ["0.0.0.0/0"]
-  ingress_rules = [
-    "http-80-tcp",
-    "all-icmp",
-    "https-443-tcp",
-    "smtps-465-tcp",
-    "custom-8080-tcp"
-  ]
-  egress_rules = ["all-all"]
 }
+
+resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_http" {
+  security_group_id = aws_security_group.ec2_security_group.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 80
+  ip_protocol = "tcp"
+  to_port     = 80
+}
+
+resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_https" {
+  security_group_id = aws_security_group.ec2_security_group.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 443
+  ip_protocol = "tcp"
+  to_port     = 443
+}
+
+resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_smtps" {
+  security_group_id = aws_security_group.ec2_security_group.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 465
+  ip_protocol = "tcp"
+  to_port     = 465
+}
+
+resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_8080" {
+  security_group_id = aws_security_group.ec2_security_group.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  from_port   = 8080
+  ip_protocol = "tcp"
+  to_port     = 8080
+}
+
+resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_icpmv4" {
+  security_group_id = aws_security_group.ec2_security_group.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = "icmpv4"
+}
+
+resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_icpmv6" {
+  security_group_id = aws_security_group.ec2_security_group.id
+
+  cidr_ipv6   = "::/0"
+  ip_protocol = "icmpv6"
+}
+
+resource "aws_vpc_security_group_egress_rule" "ec2_egress_allow_all_ipv4" {
+  security_group_id = aws_security_group.ec2_security_group.id
+
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = -1
+}
+
+resource "aws_vpc_security_group_egress_rule" "ec2_egress_allow_all_ipv6" {
+  security_group_id = aws_security_group.ec2_security_group.id
+
+  cidr_ipv6   = "::/0"
+  ip_protocol = -1
+}
+
+###############################################################################
 
 resource "aws_iam_policy" "ec2_s3_access" {
   name        = "${var.prefix}-ec2-s3-access"
   description = "Policy for EC2 instances to interact with S3 buckets"
-  policy      = templatefile("${path.module}/templates/access_landing_bucket.tftpl", {
+  policy = templatefile("${path.module}/templates/access_landing_bucket.tftpl", {
     landing_bucket = module.s3-bucket-landing.s3_bucket_arn
   })
 }
+
+###############################################################################
 
 module "ec2" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-ec2-instance.git?ref=4f8387d0925510a83ee3cb88c541beb77ce4bad6"
@@ -90,10 +150,16 @@ module "ec2" {
   iam_role_name        = "${var.prefix}-ec2-role"
   iam_role_policies = {
     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
-    CloudWatchAgentServerPolicy = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
-    S3Landing = aws_iam_policy.ec2_s3_access.arn
+    CloudWatchAgentServerPolicy  = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+    S3Landing                    = aws_iam_policy.ec2_s3_access.arn
   }
   instance_type = "t3.medium"
+
+  metadata_options = {
+    http_endpoint               = "enabled"
+    http_put_response_hop_limit = 2
+    http_tokens                 = "required"
+  }
 
   monitoring = true
 
@@ -112,8 +178,10 @@ module "ec2" {
 
   user_data = fileexists("${path.module}/scripts/user_data/deploy_nextcloud.sh") ? file("${path.module}/scripts/user_data/deploy_nextcloud.sh") : null
 
-  vpc_security_group_ids = [module.ec2_security_group.security_group_id]
+  vpc_security_group_ids = [aws_security_group.ec2_security_group.id]
 }
+
+###############################################################################
 
 resource "aws_acm_certificate" "cert" {
   certificate_body  = file("${path.module}/certs/dfr-tfm-nextcloud.duckdns.org.crt")
@@ -125,21 +193,24 @@ resource "aws_acm_certificate" "cert" {
   }
 }
 
+###############################################################################
+
 module "alb" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-alb.git?ref=ce3014eea6f44d5078b76ddc92f1cbe0df418cd2"
 
   access_logs = {
-    bucket = "my-access-logs-bucket"
-    prefix = "my-alb-logs"
+    bucket  = module.s3-bucket-logs.s3_bucket_id
+    prefix  = "${var.prefix}-alb-logs"
+    enabled = true
   }
 
   enable_tls_version_and_cipher_suite_headers = true
 
   listeners = {
     http = {
-      port               = 80
-      protocol           = "HTTP"
-      redirect           = {
+      port     = 80
+      protocol = "HTTP"
+      redirect = {
         port        = "443"
         protocol    = "HTTPS"
         status_code = "HTTP_301"
@@ -148,7 +219,7 @@ module "alb" {
     https = {
       port               = 443
       protocol           = "HTTPS"
-      ssl_policy = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+      ssl_policy         = "ELBSecurityPolicy-TLS13-1-2-2021-06"
       target_group_index = 0
       certificate_arn    = aws_acm_certificate.cert.arn
 
@@ -209,104 +280,247 @@ module "alb" {
   vpc_id = module.vpc.vpc_id
 }
 
-# module "rds_security_group" {
-#   source = "git::https://github.com/terraform-aws-modules/terraform-aws-security-group.git?ref=20e107f1658bc5c8b23efce2e17406e74e6cbeae"
+###############################################################################
 
-#   name        = "${var.prefix}-rds-sg"
-#   description = "Security group for NextCloud RDS instance"
-#   vpc_id      = module.vpc.vpc_id
+resource "aws_security_group" "rds_security_group" {
+  name        = "${var.prefix}-rds-sg"
+  description = "Security group for NextCloud RDS instance"
+  vpc_id      = module.vpc.vpc_id
+}
 
-#   ingress_cidr_blocks = []
-#   ingress_rules       = []
-#   egress_rules        = ["all-all"]
-# }
+resource "aws_vpc_security_group_ingress_rule" "rds_ingress_allow_psql_from_vpc" {
+  security_group_id = aws_security_group.rds_security_group.id
 
-# module "rds" {
-#   source = "git::https://github.com/terraform-aws-modules/terraform-aws-rds.git?ref=a4ae4a51545f5cb617d30b716f6bf11840c76a0e"
+  cidr_ipv4   = module.vpc.vpc_cidr_block
+  from_port   = 5432
+  ip_protocol = "tcp"
+  to_port     = 5432
+}
 
-#   identifier = "${var.prefix}-rds"
+resource "aws_vpc_security_group_egress_rule" "rds_egress_allow_all" {
+  security_group_id = aws_security_group.rds_security_group.id
 
-#   allocated_storage           = 20
-#   allow_major_version_upgrade = true
-#   allow_minor_version_upgrade = true
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = -1
+}
 
-#   backup_retention_period = 7
-#   backup_window           = "03:00-04:00"
+resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv6" {
+  security_group_id = aws_security_group.rds_security_group.id
+  cidr_ipv6         = "::/0"
+  ip_protocol       = "-1" # semantically equivalent to all ports
+}
 
-#   cloudwatch_log_group_class             = "INFREQUENT_ACCESS"
-#   cloudwatch_log_group_retention_in_days = 14
-#   create_cloudwatch_log_group            = true
-#   create_db_subnet_group                 = true
-#   create_monitoring_role                 = true
+###############################################################################
 
-#   db_name                     = "nextcloud"
-#   db_subnet_group_description = "DB subnet group for NextCloud RDS instance"
-#   db_subnet_group_name        = "${var.prefix}-db-subnet-group"
+module "rds" {
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-rds.git?ref=a4ae4a51545f5cb617d30b716f6bf11840c76a0e"
 
-#   enabled_cloudwatch_logs_exports = ["audit", "error", "general", "slowquery"]
-#   engine                          = "postgresql"
-#   engine_version                  = "16.3"
+  identifier = "${var.prefix}-rds"
 
-#   family = "postgres16"
+  allocated_storage           = 20
+  allow_major_version_upgrade = true
+  auto_minor_version_upgrade  = true
 
-#   instance_class = "db.t3.medium"
+  backup_retention_period = 7
+  backup_window           = "03:00-04:00"
 
-#   maintenance_window          = "Mon:04:00-Mon:05:00"
-#   manage_master_user_password = true
-#   max_allocated_storage       = 40
-#   monitoring_interval         = 60
-#   monitoring_role_description = "Role for RDS monitoring"
-#   monitoring_role_name        = "${var.prefix}-rds-monitoring-role"
-#   multi_az                    = false
+  cloudwatch_log_group_class             = "INFREQUENT_ACCESS"
+  cloudwatch_log_group_retention_in_days = 365
+  create_cloudwatch_log_group            = true
+  create_db_subnet_group                 = true
+  create_monitoring_role                 = true
 
-#   option_group_description = "Option group for NextCloud RDS instance"
-#   option_group_name        = "${var.prefix}-rds-option-group"
+  db_name                     = "nextcloud"
+  db_subnet_group_description = "DB subnet group for NextCloud RDS instance"
+  db_subnet_group_name        = "${var.prefix}-db-subnet-group"
 
-#   parameter_group_description = "Parameter group for NextCloud RDS instance"
-#   parameter_group_name        = "${var.prefix}-rds-parameter-group"
+  enabled_cloudwatch_logs_exports = ["audit", "error", "general", "slowquery"]
+  engine                          = "postgresql"
+  engine_version                  = "16.3"
 
-#   password                              = var.rds_password
-#   performance_insights_enabled          = true
-#   performance_insights_retention_period = 7
+  family = "postgres16"
 
-#   snapshot_identifier = "${var.prefix}-rds-snapshot"
-#   storage_type        = "gp3"
-#   subnet_ids          = module.vpc.private_subnets
+  instance_class = "db.t3.medium"
 
-#   username = var.prefix
+  maintenance_window                                     = "Mon:04:00-Mon:05:00"
+  major_engine_version                                   = "16"
+  manage_master_user_password                            = true
+  manage_master_user_password_rotation                   = true
+  master_user_password_rotation_automatically_after_days = 90
+  max_allocated_storage                                  = 40
+  monitoring_interval                                    = 60
+  monitoring_role_description                            = "Role for RDS monitoring"
+  monitoring_role_name                                   = "${var.prefix}-rds-monitoring-role"
+  multi_az                                               = false
 
-#   vpc_security_group_ids = [module.rds_security_group.security_group_id]
-# }
+  option_group_description = "Option group for NextCloud RDS instance"
+  option_group_name        = "${var.prefix}-rds-option-group"
 
-# TODO: Complete the following modules
-# https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-s3-buckets-are-encrypted-with-kms-by-default
-# https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/s3-policies/s3-13-enable-logging
-# https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-networking-policies/s3-bucket-should-have-public-access-blocks-defaults-to-false-if-the-public-access-block-is-not-attached
-# https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/bc-aws-2-62
-# https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-logging-policies/bc-aws-2-61
-# https://docs.prismacloud.io/en/enterprise-edition/policy-reference/aws-policies/aws-general-policies/ensure-that-s3-bucket-has-cross-region-replication-enabled
+  parameter_group_description = "Parameter group for NextCloud RDS instance"
+  parameter_group_name        = "${var.prefix}-rds-parameter-group"
 
+  password                              = var.rds_password
+  performance_insights_enabled          = true
+  performance_insights_retention_period = 7
+
+  snapshot_identifier = "${var.prefix}-rds-snapshot"
+  storage_type        = "gp3"
+  subnet_ids          = module.vpc.private_subnets
+
+  username = var.prefix
+
+  vpc_security_group_ids = [aws_security_group.rds_security_group.id]
+}
+
+###############################################################################
+
+module "s3-bucket-logs" {
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
+
+  bucket              = "${var.prefix}-logging-bucket"
+  block_public_acls   = true
+  block_public_policy = true
+
+  lifecycle_rule = [
+    {
+      id     = "expire"
+      status = "Enabled"
+      prefix = "logs/"
+      transition = [{
+        days          = 30
+        storage_class = "STANDARD_IA"
+      }]
+      expiration = {
+        days = 90
+      }
+      abort_incomplete_multipart_upload = {
+        days_after_initiation = 7
+      }
+    }
+  ]
+
+  logging = {
+    target_bucket = "${var.prefix}-logging-bucket-logs"
+    target_prefix = "logs/"
+  }
+
+  versioning = {
+    enabled = true
+    status  = "Enabled"
+  }
+}
+
+###############################################################################
 
 module "s3-bucket-landing" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
 
-  bucket = "${var.prefix}-landing-bucket"
+  bucket              = "${var.prefix}-landing-bucket"
+  block_public_acls   = true
+  block_public_policy = true
 
+  lifecycle_rule = [
+    {
+      id     = "expire"
+      status = "Enabled"
+      prefix = "logs/"
+      transition = [{
+        days          = 30
+        storage_class = "STANDARD_IA"
+      }]
+      expiration = {
+        days = 90
+      }
+      abort_incomplete_multipart_upload = {
+        days_after_initiation = 7
+      }
+    }
+  ]
+
+  logging = {
+    target_bucket = "${var.prefix}-landing-bucket-logs"
+    target_prefix = "logs/"
+  }
 
   versioning = {
     enabled = true
+    status  = "Enabled"
   }
 }
+
+###############################################################################
+
+resource "aws_sns_topic" "landing_bucket_notifications" {
+  name              = "${var.prefix}-landing-bucket"
+  kms_master_key_id = "alias/aws/sns"
+}
+
+resource "aws_s3_bucket_notification" "landing_bucket_notification" {
+  bucket = module.s3-bucket-landing.s3_bucket_id
+
+  topic {
+    topic_arn     = aws_sns_topic.landing_bucket_notifications.arn
+    events        = ["s3:ObjectCreated:*"]
+    filter_prefix = "logs/"
+  }
+}
+
+###############################################################################
 
 module "s3-bucket-staging" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
 
-  bucket = "${var.prefix}-staging-bucket"
+  bucket              = "${var.prefix}-staging-bucket"
+  block_public_acls   = true
+  block_public_policy = true
+
+  lifecycle_rule = [
+    {
+      id     = "expire"
+      status = "Enabled"
+      prefix = "logs/"
+      transition = [{
+        days          = 30
+        storage_class = "STANDARD_IA"
+      }]
+      expiration = {
+        days = 90
+      }
+      abort_incomplete_multipart_upload = {
+        days_after_initiation = 7
+      }
+    }
+  ]
+
+  logging = {
+    target_bucket = "${var.prefix}-logging-bucket"
+    target_prefix = "${var.prefix}-staging-bucket/"
+  }
 
   versioning = {
     enabled = true
+    status  = "Enabled"
   }
 }
+
+###############################################################################
+
+resource "aws_sns_topic" "staging_bucket_notifications" {
+  name              = "${var.prefix}-staging-bucket"
+  kms_master_key_id = "alias/aws/sns"
+}
+
+resource "aws_s3_bucket_notification" "staging_bucket_notification" {
+  bucket = module.s3-bucket-staging.s3_bucket_id
+
+  topic {
+    topic_arn     = aws_sns_topic.staging_bucket_notifications.arn
+    events        = ["s3:ObjectCreated:*"]
+    filter_prefix = "logs/"
+  }
+}
+
+###############################################################################
 
 ## Cognito user pool with resources (there's no module for this)
 
