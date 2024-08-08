@@ -102,7 +102,9 @@ resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_icpmv4" {
   security_group_id = aws_security_group.ec2_security_group.id
 
   cidr_ipv4   = "0.0.0.0/0"
-  ip_protocol = "icmpv4"
+  from_port   = -1
+  ip_protocol = "icmp"
+  to_port     = -1
 }
 
 resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_icpmv6" {
@@ -131,7 +133,7 @@ resource "aws_vpc_security_group_egress_rule" "ec2_egress_allow_all_ipv6" {
 resource "aws_iam_policy" "ec2_s3_access" {
   name        = "${var.prefix}-ec2-s3-access"
   description = "Policy for EC2 instances to interact with S3 buckets"
-  policy = templatefile("${path.module}/templates/access_landing_bucket.tftpl", {
+  policy = templatefile("${path.module}/templates/iam_policies/access_landing_bucket.tftpl", {
     landing_bucket = module.s3-bucket-landing.s3_bucket_arn
   })
 }
@@ -199,8 +201,13 @@ module "alb" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-alb.git?ref=ce3014eea6f44d5078b76ddc92f1cbe0df418cd2"
 
   access_logs = {
-    bucket  = module.s3-bucket-logs.s3_bucket_id
-    prefix  = "${var.prefix}-alb-logs"
+    bucket = module.s3-bucket-logs.s3_bucket_arn
+    prefix = "${var.prefix}-alb-access-logs"
+  }
+
+  connection_logs = {
+    bucket  = module.s3-bucket-logs.s3_bucket_arn
+    prefix  = "${var.prefix}-alb-connection-logs"
     enabled = true
   }
 
@@ -217,58 +224,54 @@ module "alb" {
       }
     }
     https = {
-      port               = 443
-      protocol           = "HTTPS"
-      ssl_policy         = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-      target_group_index = 0
-      certificate_arn    = aws_acm_certificate.cert.arn
-
+      port            = 443
+      protocol        = "HTTPS"
+      ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+      certificate_arn = aws_acm_certificate.cert.arn
+      forward = {
+        target_group_arn = module.alb.target_groups["nextcloud"].arn
+      }
     }
   }
 
   name = "${var.prefix}-alb"
 
   security_group_description = "Security group for ALB"
-  security_group_ingress_rules = [
-    {
+  security_group_ingress_rules = {
+    all_http = {
       from_port   = 80
       to_port     = 80
-      protocol    = "TCP"
-      cidr_blocks = [module.vpc.vpc_cidr_block]
-    },
-    {
+      ip_protocol = "tcp"
+      description = "HTTP web traffic"
+      cidr_ipv4   = "0.0.0.0/0"
+    }
+    all_https = {
       from_port   = 443
       to_port     = 443
-      protocol    = "TCP"
-      cidr_blocks = [module.vpc.vpc_cidr_block]
+      ip_protocol = "tcp"
+      description = "HTTPS web traffic"
+      cidr_ipv4   = "0.0.0.0/0"
     }
-  ]
+  }
+  security_group_egress_rules = {
+    all = {
+      ip_protocol = "-1"
+      cidr_ipv4   = "10.0.0.0/16"
+    }
+  }
   security_group_name = "${var.prefix}-alb-sg"
   subnets             = module.vpc.public_subnets
 
   target_groups = {
-    nextcloud_http = {
+    nextcloud = {
       backend_protocol = "HTTP"
-      backend_port     = 80
+      backend_port     = 8080
+      target_id        = module.ec2[0].id
       target_type      = "instance"
       health_check = {
         path                = "/status.php"
-        port                = "traffic-port"
+        port                = "8080"
         protocol            = "HTTP"
-        interval            = 30
-        timeout             = 5
-        healthy_threshold   = 2
-        unhealthy_threshold = 2
-      }
-    }
-    nextcloud_https = {
-      backend_protocol = "HTTPS"
-      backend_port     = 443
-      target_type      = "instance"
-      health_check = {
-        path                = "/status.php"
-        port                = "traffic-port"
-        protocol            = "HTTPS"
         interval            = 30
         timeout             = 5
         healthy_threshold   = 2
@@ -334,8 +337,8 @@ module "rds" {
   db_subnet_group_description = "DB subnet group for NextCloud RDS instance"
   db_subnet_group_name        = "${var.prefix}-db-subnet-group"
 
-  enabled_cloudwatch_logs_exports = ["audit", "error", "general", "slowquery"]
-  engine                          = "postgresql"
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
+  engine                          = "postgres"
   engine_version                  = "16.3"
 
   family = "postgres16"
@@ -363,9 +366,8 @@ module "rds" {
   performance_insights_enabled          = true
   performance_insights_retention_period = 7
 
-  snapshot_identifier = "${var.prefix}-rds-snapshot"
-  storage_type        = "gp3"
-  subnet_ids          = module.vpc.private_subnets
+  storage_type = "gp3"
+  subnet_ids   = module.vpc.private_subnets
 
   username = var.prefix
 
@@ -398,11 +400,6 @@ module "s3-bucket-logs" {
       }
     }
   ]
-
-  logging = {
-    target_bucket = "${var.prefix}-logging-bucket-logs"
-    target_prefix = "logs/"
-  }
 
   versioning = {
     enabled = true
@@ -437,31 +434,9 @@ module "s3-bucket-landing" {
     }
   ]
 
-  logging = {
-    target_bucket = "${var.prefix}-landing-bucket-logs"
-    target_prefix = "logs/"
-  }
-
   versioning = {
     enabled = true
     status  = "Enabled"
-  }
-}
-
-###############################################################################
-
-resource "aws_sns_topic" "landing_bucket_notifications" {
-  name              = "${var.prefix}-landing-bucket"
-  kms_master_key_id = "alias/aws/sns"
-}
-
-resource "aws_s3_bucket_notification" "landing_bucket_notification" {
-  bucket = module.s3-bucket-landing.s3_bucket_id
-
-  topic {
-    topic_arn     = aws_sns_topic.landing_bucket_notifications.arn
-    events        = ["s3:ObjectCreated:*"]
-    filter_prefix = "logs/"
   }
 }
 
@@ -500,23 +475,6 @@ module "s3-bucket-staging" {
   versioning = {
     enabled = true
     status  = "Enabled"
-  }
-}
-
-###############################################################################
-
-resource "aws_sns_topic" "staging_bucket_notifications" {
-  name              = "${var.prefix}-staging-bucket"
-  kms_master_key_id = "alias/aws/sns"
-}
-
-resource "aws_s3_bucket_notification" "staging_bucket_notification" {
-  bucket = module.s3-bucket-staging.s3_bucket_id
-
-  topic {
-    topic_arn     = aws_sns_topic.staging_bucket_notifications.arn
-    events        = ["s3:ObjectCreated:*"]
-    filter_prefix = "logs/"
   }
 }
 
