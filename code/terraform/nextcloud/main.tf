@@ -24,15 +24,15 @@ module "vpc" {
   manage_default_security_group = false
   manage_default_vpc            = false
 
-  name = "${var.prefix}-vpc"
+  name = "${var.name_prefix}-vpc"
 
   private_subnets = [
     "${cidrsubnet(module.vpc.vpc_cidr_block, 8, 1)}",
     "${cidrsubnet(module.vpc.vpc_cidr_block, 8, 2)}"
   ]
   private_subnet_names = [
-    "${var.prefix}-private-subnet-1",
-    "${var.prefix}-private-subnet-2"
+    "${var.name_prefix}-private-subnet-1",
+    "${var.name_prefix}-private-subnet-2"
   ]
   private_subnet_suffix = ""
 
@@ -41,15 +41,15 @@ module "vpc" {
     "${cidrsubnet(module.vpc.vpc_cidr_block, 8, 4)}"
   ]
   public_subnet_names = [
-    "${var.prefix}-public-subnet-1",
-    "${var.prefix}-public-subnet-2"
+    "${var.name_prefix}-public-subnet-1",
+    "${var.name_prefix}-public-subnet-2"
   ]
   public_subnet_suffix = ""
 
   single_nat_gateway = true
 
-  vpc_flow_log_iam_policy_name = "${var.prefix}-vpc-flow-log-iam-policy"
-  vpc_flow_log_iam_role_name   = "${var.prefix}-vpc-flow-log-iam-role"
+  vpc_flow_log_iam_policy_name = "${var.name_prefix}-vpc-flow-log-iam-policy"
+  vpc_flow_log_iam_role_name   = "${var.name_prefix}-vpc-flow-log-iam-role"
 }
 
 ###############################################################################
@@ -57,7 +57,7 @@ module "vpc" {
 # TODO: Add the module for the security group
 
 resource "aws_security_group" "ec2_security_group" {
-  name        = "${var.prefix}-ec2-sg"
+  name        = "${var.name_prefix}-ec2-sg"
   description = "Security group for NextCloud EC2 instance"
   vpc_id      = module.vpc.vpc_id
 }
@@ -131,7 +131,7 @@ resource "aws_vpc_security_group_egress_rule" "ec2_egress_allow_all_ipv6" {
 ###############################################################################
 
 resource "aws_iam_policy" "ec2_s3_access" {
-  name        = "${var.prefix}-ec2-s3-access"
+  name        = "${var.name_prefix}-ec2-s3-access"
   description = "Policy for EC2 instances to interact with S3 buckets"
   policy = templatefile("${path.module}/templates/iam_policies/access_landing_bucket.tftpl", {
     landing_bucket = module.s3-bucket-landing.s3_bucket_arn
@@ -149,7 +149,7 @@ module "ec2" {
   create_iam_instance_profile = true
 
   iam_role_description = "Role for EC2 instances"
-  iam_role_name        = "${var.prefix}-ec2-role"
+  iam_role_name        = "${var.name_prefix}-ec2-role"
   iam_role_policies = {
     AmazonSSMManagedInstanceCore = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
     CloudWatchAgentServerPolicy  = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
@@ -165,7 +165,7 @@ module "ec2" {
 
   monitoring = true
 
-  name = "${var.prefix}-ec2"
+  name = "${var.name_prefix}-ec2"
 
   root_block_device = [
     {
@@ -202,12 +202,12 @@ module "alb" {
 
   access_logs = {
     bucket = module.s3-bucket-logs.s3_bucket_arn
-    prefix = "${var.prefix}-alb-access-logs"
+    prefix = "${var.name_prefix}-alb-access-logs"
   }
 
   connection_logs = {
     bucket  = module.s3-bucket-logs.s3_bucket_arn
-    prefix  = "${var.prefix}-alb-connection-logs"
+    prefix  = "${var.name_prefix}-alb-connection-logs"
     enabled = true
   }
 
@@ -234,7 +234,7 @@ module "alb" {
     }
   }
 
-  name = "${var.prefix}-alb"
+  name = "${var.name_prefix}-alb"
 
   security_group_description = "Security group for ALB"
   security_group_ingress_rules = {
@@ -259,7 +259,7 @@ module "alb" {
       cidr_ipv4   = "10.0.0.0/16"
     }
   }
-  security_group_name = "${var.prefix}-alb-sg"
+  security_group_name = "${var.name_prefix}-alb-sg"
   subnets             = module.vpc.public_subnets
 
   target_groups = {
@@ -286,7 +286,7 @@ module "alb" {
 ###############################################################################
 
 resource "aws_security_group" "rds_security_group" {
-  name        = "${var.prefix}-rds-sg"
+  name        = "${var.name_prefix}-rds-sg"
   description = "Security group for NextCloud RDS instance"
   vpc_id      = module.vpc.vpc_id
 }
@@ -318,7 +318,7 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv6" {
 module "rds" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-rds.git?ref=a4ae4a51545f5cb617d30b716f6bf11840c76a0e"
 
-  identifier = "${var.prefix}-rds"
+  identifier = "${var.name_prefix}-rds"
 
   allocated_storage           = 20
   allow_major_version_upgrade = true
@@ -335,7 +335,7 @@ module "rds" {
 
   db_name                     = "nextcloud"
   db_subnet_group_description = "DB subnet group for NextCloud RDS instance"
-  db_subnet_group_name        = "${var.prefix}-db-subnet-group"
+  db_subnet_group_name        = "${var.name_prefix}-db-subnet-group"
 
   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
   engine                          = "postgres"
@@ -353,14 +353,14 @@ module "rds" {
   max_allocated_storage                                  = 40
   monitoring_interval                                    = 60
   monitoring_role_description                            = "Role for RDS monitoring"
-  monitoring_role_name                                   = "${var.prefix}-rds-monitoring-role"
+  monitoring_role_name                                   = "${var.name_prefix}-rds-monitoring-role"
   multi_az                                               = false
 
   option_group_description = "Option group for NextCloud RDS instance"
-  option_group_name        = "${var.prefix}-rds-option-group"
+  option_group_name        = "${var.name_prefix}-rds-option-group"
 
   parameter_group_description = "Parameter group for NextCloud RDS instance"
-  parameter_group_name        = "${var.prefix}-rds-parameter-group"
+  parameter_group_name        = "${var.name_prefix}-rds-parameter-group"
 
   password                              = var.rds_password
   performance_insights_enabled          = true
@@ -369,7 +369,7 @@ module "rds" {
   storage_type = "gp3"
   subnet_ids   = module.vpc.private_subnets
 
-  username = var.prefix
+  username = var.name_prefix
 
   vpc_security_group_ids = [aws_security_group.rds_security_group.id]
 }
@@ -379,7 +379,7 @@ module "rds" {
 module "s3-bucket-logs" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
 
-  bucket              = "${var.prefix}-logging-bucket"
+  bucket              = "${var.name_prefix}-logging-bucket"
   block_public_acls   = true
   block_public_policy = true
 
@@ -412,7 +412,7 @@ module "s3-bucket-logs" {
 module "s3-bucket-landing" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
 
-  bucket              = "${var.prefix}-landing-bucket"
+  bucket              = "${var.name_prefix}-landing-bucket"
   block_public_acls   = true
   block_public_policy = true
 
@@ -445,7 +445,7 @@ module "s3-bucket-landing" {
 module "s3-bucket-staging" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
 
-  bucket              = "${var.prefix}-staging-bucket"
+  bucket              = "${var.name_prefix}-staging-bucket"
   block_public_acls   = true
   block_public_policy = true
 
@@ -468,8 +468,8 @@ module "s3-bucket-staging" {
   ]
 
   logging = {
-    target_bucket = "${var.prefix}-logging-bucket"
-    target_prefix = "${var.prefix}-staging-bucket/"
+    target_bucket = "${var.name_prefix}-logging-bucket"
+    target_prefix = "${var.name_prefix}-staging-bucket/"
   }
 
   versioning = {

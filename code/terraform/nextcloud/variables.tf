@@ -1,4 +1,4 @@
-variable "prefix" {
+variable "name_prefix" {
   type        = string
   description = "value to be prefixed to all resources"
   default     = "nextcloud"
