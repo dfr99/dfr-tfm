@@ -485,13 +485,33 @@ module "s3-bucket-staging" {
 # module "cognito" {
 #   source = "./modules/cognito"
 
-#   cognito_user_pool_name = "${var.prefix}-cognito-user-pool"
+#   cognito_user_pool_name = "${var.name_prefix}-cognito-user-pool"
 #   cognito_user_usernames = [
 #     {
-#       username = "${var.prefix}-admin"
+#       username = "${var.name_prefix}-admin"
 #     },
 #     {
-#       username = "${var.prefix}-regular-user"
+#       username = "${var.name_prefix}-regular-user"
 #     }
 #   ]
 # }
+
+resource "aws_resourcegroups_group" "github_runner" {
+  name        = "${var.name_prefix}-rg"
+  description = "Resource Group for OIDC GitHub Actions Identity Provider"
+
+  resource_query {
+    type = "TAG_FILTERS_1_0"
+    query = jsonencode({
+      ResourceTypeFilters = ["AWS::AllSupported"],
+      TagFilters = [{
+        Key    = "Project",
+        Values = ["nextcloud"]
+      }]
+    })
+  }
+
+  tags = {
+    "Name" = "${var.name_prefix}-rg"
+  }
+}
