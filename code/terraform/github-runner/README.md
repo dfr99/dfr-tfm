@@ -23,6 +23,7 @@
 | [aws_iam_role.github-runner](https://registry.terraform.io/providers/hashicorp/aws/5.56.1/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy_attachment.cloudwatch_agent](https://registry.terraform.io/providers/hashicorp/aws/5.56.1/docs/resources/iam_role_policy_attachment) | resource |
 | [aws_iam_role_policy_attachment.ssm](https://registry.terraform.io/providers/hashicorp/aws/5.56.1/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_resourcegroups_group.github_runner](https://registry.terraform.io/providers/hashicorp/aws/5.56.1/docs/resources/resourcegroups_group) | resource |
 | [aws_security_group.github_runner](https://registry.terraform.io/providers/hashicorp/aws/5.56.1/docs/resources/security_group) | resource |
 | [aws_vpc_security_group_egress_rule.allow_all_traffic_ipv4_on_github_runner](https://registry.terraform.io/providers/hashicorp/aws/5.56.1/docs/resources/vpc_security_group_egress_rule) | resource |
 | [aws_vpc_security_group_egress_rule.allow_all_traffic_ipv6_on_github_runner](https://registry.terraform.io/providers/hashicorp/aws/5.56.1/docs/resources/vpc_security_group_egress_rule) | resource |
@@ -36,6 +37,7 @@
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_gh_pat"></a> [gh\_pat](#input\_gh\_pat) | GitHub Personal Access Token to configure GitHub Runner | `string` | n/a | yes |
+| <a name="input_name_prefix"></a> [name\_prefix](#input\_name\_prefix) | Prefix for the name of the resources | `string` | `"github-runner"` | no |
 ## Outputs
 
 No outputs.

@@ -13,9 +13,13 @@ data "aws_iam_policy_document" "assume_role" {
 }
 
 resource "aws_iam_role" "github-runner" {
-  name               = "github-runner"
+  name               = "${var.name_prefix}-role"
   path               = "/"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
+
+  tags = {
+    "Name" = "${var.name_prefix}-role"
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "ssm" {
@@ -35,9 +39,13 @@ resource "aws_iam_instance_profile" "github-runner" {
 
 ### EC2 instance security group
 resource "aws_security_group" "github_runner" {
-  name        = "github-runner-sg"
+  name        = "${var.name_prefix}-sg"
   description = "Allow HTTPS inbound traffic and all outbound traffic"
   vpc_id      = "vpc-d90be2b0"
+
+  tags = {
+    "Name" = "${var.name_prefix}-sg"
+  }
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_https_ipv4_on_github_runner" {
@@ -99,4 +107,28 @@ module "ec2" {
     aws_region  = data.aws_region.current.name
   })
   user_data_replace_on_change = true
+
+  tags = {
+    "Name" = "${var.name_prefix}-ec2"
+  }
+}
+
+resource "aws_resourcegroups_group" "github_runner" {
+  name        = "${var.name_prefix}-rg"
+  description = "Resource Group for GitHub Runner resources"
+
+  resource_query {
+    type = "TAG_FILTERS_1_0"
+    query = jsonencode({
+      ResourceTypeFilters = ["AWS::AllSupported"],
+      TagFilters = [{
+        Key    = "Project",
+        Values = ["${var.name_prefix}"]
+      }]
+    })
+  }
+
+  tags = {
+    "Name" = "${var.name_prefix}-rg"
+  }
 }

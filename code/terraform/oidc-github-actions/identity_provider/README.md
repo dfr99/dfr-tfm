@@ -46,6 +46,7 @@ No modules.
 | Name | Type |
 |------|------|
 | [aws_iam_openid_connect_provider.oidc_github](https://registry.terraform.io/providers/hashicorp/aws/5.56.1/docs/resources/iam_openid_connect_provider) | resource |
+| [aws_resourcegroups_group.github_runner](https://registry.terraform.io/providers/hashicorp/aws/5.56.1/docs/resources/resourcegroups_group) | resource |
 ## Inputs
 
 No inputs.
