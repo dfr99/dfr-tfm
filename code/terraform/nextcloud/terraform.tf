@@ -25,7 +25,6 @@ provider "aws" {
   region = "eu-central-1"
   default_tags {
     tags = {
-      "OIDC"      = "GitHub"
       "Terraform" = "True"
       "Project"   = "nextcloud"
       "Owner"     = "dfr99"
@@ -35,3 +34,12 @@ provider "aws" {
 }
 
 provider "random" {}
+
+
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+locals {
+  account_id = data.aws_caller_identity.current.account_id
+  region     = data.aws_region.current.name
+}

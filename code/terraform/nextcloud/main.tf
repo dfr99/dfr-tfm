@@ -201,22 +201,25 @@ module "alb" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-alb.git?ref=ce3014eea6f44d5078b76ddc92f1cbe0df418cd2"
 
   access_logs = {
-    bucket = module.s3-bucket-logs.s3_bucket_arn
-    prefix = "${var.name_prefix}-alb-access-logs"
-  }
-
-  connection_logs = {
-    bucket  = module.s3-bucket-logs.s3_bucket_arn
-    prefix  = "${var.name_prefix}-alb-connection-logs"
+    bucket = module.s3-bucket-logs.s3_bucket_id
+    prefix = "alb/access"
     enabled = true
   }
 
+  connection_logs = {
+    bucket  = module.s3-bucket-logs.s3_bucket_id
+    prefix  = "alb/connections"
+    enabled = true
+  }
+
+  enable_deletion_protection = false
   enable_tls_version_and_cipher_suite_headers = true
 
   listeners = {
     http = {
       port     = 80
       protocol = "HTTP"
+
       redirect = {
         port        = "443"
         protocol    = "HTTPS"
@@ -228,8 +231,9 @@ module "alb" {
       protocol        = "HTTPS"
       ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-2021-06"
       certificate_arn = aws_acm_certificate.cert.arn
+      
       forward = {
-        target_group_arn = module.alb.target_groups["nextcloud"].arn
+        target_group_key = "nextcloud"
       }
     }
   }
@@ -285,99 +289,107 @@ module "alb" {
 
 ###############################################################################
 
-resource "aws_security_group" "rds_security_group" {
-  name        = "${var.name_prefix}-rds-sg"
-  description = "Security group for NextCloud RDS instance"
-  vpc_id      = module.vpc.vpc_id
-}
+# resource "aws_security_group" "rds_security_group" {
+#   name        = "${var.name_prefix}-rds-sg"
+#   description = "Security group for NextCloud RDS instance"
+#   vpc_id      = module.vpc.vpc_id
+# }
 
-resource "aws_vpc_security_group_ingress_rule" "rds_ingress_allow_psql_from_vpc" {
-  security_group_id = aws_security_group.rds_security_group.id
+# resource "aws_vpc_security_group_ingress_rule" "rds_ingress_allow_psql_from_vpc" {
+#   security_group_id = aws_security_group.rds_security_group.id
 
-  cidr_ipv4   = module.vpc.vpc_cidr_block
-  from_port   = 5432
-  ip_protocol = "tcp"
-  to_port     = 5432
-}
+#   cidr_ipv4   = module.vpc.vpc_cidr_block
+#   from_port   = 5432
+#   ip_protocol = "tcp"
+#   to_port     = 5432
+# }
 
-resource "aws_vpc_security_group_egress_rule" "rds_egress_allow_all" {
-  security_group_id = aws_security_group.rds_security_group.id
+# resource "aws_vpc_security_group_egress_rule" "rds_egress_allow_all" {
+#   security_group_id = aws_security_group.rds_security_group.id
 
-  cidr_ipv4   = "0.0.0.0/0"
-  ip_protocol = -1
-}
+#   cidr_ipv4   = "0.0.0.0/0"
+#   ip_protocol = -1
+# }
 
-resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv6" {
-  security_group_id = aws_security_group.rds_security_group.id
-  cidr_ipv6         = "::/0"
-  ip_protocol       = "-1" # semantically equivalent to all ports
-}
+# resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv6" {
+#   security_group_id = aws_security_group.rds_security_group.id
+#   cidr_ipv6         = "::/0"
+#   ip_protocol       = "-1" # semantically equivalent to all ports
+# }
 
 ###############################################################################
 
-module "rds" {
-  source = "git::https://github.com/terraform-aws-modules/terraform-aws-rds.git?ref=a4ae4a51545f5cb617d30b716f6bf11840c76a0e"
+# module "rds" {
+#   source = "git::https://github.com/terraform-aws-modules/terraform-aws-rds.git?ref=a4ae4a51545f5cb617d30b716f6bf11840c76a0e"
 
-  identifier = "${var.name_prefix}-rds"
+#   identifier = "${var.name_prefix}-rds"
 
-  allocated_storage           = 20
-  allow_major_version_upgrade = true
-  auto_minor_version_upgrade  = true
+#   allocated_storage           = 20
+#   allow_major_version_upgrade = true
+#   auto_minor_version_upgrade  = true
 
-  backup_retention_period = 7
-  backup_window           = "03:00-04:00"
+#   backup_retention_period = 7
+#   backup_window           = "03:00-04:00"
 
-  cloudwatch_log_group_class             = "INFREQUENT_ACCESS"
-  cloudwatch_log_group_retention_in_days = 365
-  create_cloudwatch_log_group            = true
-  create_db_subnet_group                 = true
-  create_monitoring_role                 = true
+#   cloudwatch_log_group_class             = "INFREQUENT_ACCESS"
+#   cloudwatch_log_group_retention_in_days = 365
+#   create_cloudwatch_log_group            = true
+#   create_db_subnet_group                 = true
+#   create_monitoring_role                 = true
 
-  db_name                     = "nextcloud"
-  db_subnet_group_description = "DB subnet group for NextCloud RDS instance"
-  db_subnet_group_name        = "${var.name_prefix}-db-subnet-group"
+#   db_name                     = "nextcloud"
+#   db_subnet_group_description = "DB subnet group for NextCloud RDS instance"
+#   db_subnet_group_name        = "${var.name_prefix}-db-subnet-group"
 
-  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
-  engine                          = "postgres"
-  engine_version                  = "16.3"
+#   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
+#   engine                          = "postgres"
+#   engine_version                  = "16.3"
 
-  family = "postgres16"
+#   family = "postgres16"
 
-  instance_class = "db.t3.medium"
+#   instance_class = "db.t3.medium"
 
-  maintenance_window                                     = "Mon:04:00-Mon:05:00"
-  major_engine_version                                   = "16"
-  manage_master_user_password                            = true
-  manage_master_user_password_rotation                   = true
-  master_user_password_rotation_automatically_after_days = 90
-  max_allocated_storage                                  = 40
-  monitoring_interval                                    = 60
-  monitoring_role_description                            = "Role for RDS monitoring"
-  monitoring_role_name                                   = "${var.name_prefix}-rds-monitoring-role"
-  multi_az                                               = false
+#   maintenance_window                                     = "Mon:04:00-Mon:05:00"
+#   major_engine_version                                   = "16"
+#   manage_master_user_password                            = true
+#   manage_master_user_password_rotation                   = true
+#   master_user_password_rotation_automatically_after_days = 90
+#   max_allocated_storage                                  = 40
+#   monitoring_interval                                    = 60
+#   monitoring_role_description                            = "Role for RDS monitoring"
+#   monitoring_role_name                                   = "${var.name_prefix}-rds-monitoring-role"
+#   multi_az                                               = false
 
-  option_group_description = "Option group for NextCloud RDS instance"
-  option_group_name        = "${var.name_prefix}-rds-option-group"
+#   option_group_description = "Option group for NextCloud RDS instance"
+#   option_group_name        = "${var.name_prefix}-rds-option-group"
 
-  parameter_group_description = "Parameter group for NextCloud RDS instance"
-  parameter_group_name        = "${var.name_prefix}-rds-parameter-group"
+#   parameter_group_description = "Parameter group for NextCloud RDS instance"
+#   parameter_group_name        = "${var.name_prefix}-rds-parameter-group"
 
-  password                              = var.rds_password
-  performance_insights_enabled          = true
-  performance_insights_retention_period = 7
+#   password                              = var.rds_password
+#   performance_insights_enabled          = true
+#   performance_insights_retention_period = 7
 
-  storage_type = "gp3"
-  subnet_ids   = module.vpc.private_subnets
+#   storage_type = "gp3"
+#   subnet_ids   = module.vpc.private_subnets
 
-  username = var.name_prefix
+#   username = var.name_prefix
 
-  vpc_security_group_ids = [aws_security_group.rds_security_group.id]
-}
+#   vpc_security_group_ids = [aws_security_group.rds_security_group.id]
+# }
 
 ###############################################################################
 
 module "s3-bucket-logs" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
+
+  attach_policy = true
+  policy       = templatefile("${path.module}/templates/iam_policies/alb_logging_bucket_policy.tftpl", {
+    aws_account_id = "054676820928",
+    s3_alb_access_logs = "arn:aws:s3:::${var.name_prefix}-logging-bucket/alb/access/*",
+    s3_alb_connections_logs = "arn:aws:s3:::${var.name_prefix}-logging-bucket/alb/connections/*"
+  })
+
 
   bucket              = "${var.name_prefix}-logging-bucket"
   block_public_acls   = true
@@ -442,59 +454,43 @@ module "s3-bucket-landing" {
 
 ###############################################################################
 
-module "s3-bucket-staging" {
-  source = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
+# module "s3-bucket-staging" {
+#   source = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
 
-  bucket              = "${var.name_prefix}-staging-bucket"
-  block_public_acls   = true
-  block_public_policy = true
+#   bucket              = "${var.name_prefix}-staging-bucket"
+#   block_public_acls   = true
+#   block_public_policy = true
 
-  lifecycle_rule = [
-    {
-      id     = "expire"
-      status = "Enabled"
-      prefix = "logs/"
-      transition = [{
-        days          = 30
-        storage_class = "STANDARD_IA"
-      }]
-      expiration = {
-        days = 90
-      }
-      abort_incomplete_multipart_upload = {
-        days_after_initiation = 7
-      }
-    }
-  ]
-
-  logging = {
-    target_bucket = "${var.name_prefix}-logging-bucket"
-    target_prefix = "${var.name_prefix}-staging-bucket/"
-  }
-
-  versioning = {
-    enabled = true
-    status  = "Enabled"
-  }
-}
-
-###############################################################################
-
-## Cognito user pool with resources (there's no module for this)
-
-# module "cognito" {
-#   source = "./modules/cognito"
-
-#   cognito_user_pool_name = "${var.name_prefix}-cognito-user-pool"
-#   cognito_user_usernames = [
+#   lifecycle_rule = [
 #     {
-#       username = "${var.name_prefix}-admin"
-#     },
-#     {
-#       username = "${var.name_prefix}-regular-user"
+#       id     = "expire"
+#       status = "Enabled"
+#       prefix = "logs/"
+#       transition = [{
+#         days          = 30
+#         storage_class = "STANDARD_IA"
+#       }]
+#       expiration = {
+#         days = 90
+#       }
+#       abort_incomplete_multipart_upload = {
+#         days_after_initiation = 7
+#       }
 #     }
 #   ]
+
+#   logging = {
+#     target_bucket = "${var.name_prefix}-logging-bucket"
+#     target_prefix = "${var.name_prefix}-staging-bucket/"
+#   }
+
+#   versioning = {
+#     enabled = true
+#     status  = "Enabled"
+#   }
 # }
+
+###############################################################################
 
 resource "aws_resourcegroups_group" "github_runner" {
   name        = "${var.name_prefix}-rg"
