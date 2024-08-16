@@ -54,7 +54,7 @@ resource "aws_vpc_security_group_ingress_rule" "allow_https_ipv4_on_github_runne
   from_port         = 443
   ip_protocol       = "tcp"
   to_port           = 443
-  description = "Allow IPv4 HTTPS inbound traffic from anywhere"
+  description       = "Allow IPv4 HTTPS inbound traffic from anywhere"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "allow_https_ipv6_on_github_runner" {
@@ -63,21 +63,21 @@ resource "aws_vpc_security_group_ingress_rule" "allow_https_ipv6_on_github_runne
   from_port         = 443
   ip_protocol       = "tcp"
   to_port           = 443
-  description = "Allow IPv6 HTTPS inbound traffic from anywhere"
+  description       = "Allow IPv6 HTTPS inbound traffic from anywhere"
 }
 
 resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv4_on_github_runner" {
   security_group_id = aws_security_group.github_runner.id
   cidr_ipv4         = "0.0.0.0/0"
   ip_protocol       = "-1"
-  description = "Allow all IPv4 outbound traffic"
+  description       = "Allow all IPv4 outbound traffic"
 }
 
 resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv6_on_github_runner" {
   security_group_id = aws_security_group.github_runner.id
   cidr_ipv6         = "::/0"
   ip_protocol       = "-1"
-  description = "Allow all IPv6 outbound traffic"
+  description       = "Allow all IPv6 outbound traffic"
 }
 
 ### EC2 instance

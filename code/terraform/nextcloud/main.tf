@@ -453,7 +453,7 @@ module "s3-bucket-landing" {
   ]
 
   restrict_public_buckets = true
-  
+
   versioning = {
     enabled = true
     status  = "Enabled"
