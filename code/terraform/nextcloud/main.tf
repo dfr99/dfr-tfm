@@ -145,7 +145,7 @@ module "ec2" {
     CloudWatchAgentServerPolicy  = "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
     S3Landing                    = aws_iam_policy.ec2_s3_access.arn
   }
-  instance_type = "t3.medium"
+  instance_type = "t3.small"
 
   metadata_options = {
     http_endpoint               = "enabled"
@@ -258,18 +258,21 @@ module "alb" {
 
   target_groups = {
     nextcloud = {
-      backend_protocol = "HTTP"
-      backend_port     = 8080
-      target_id        = module.ec2[0].id
-      target_type      = "instance"
+      name        = "${var.name_prefix}-tg"
+      protocol    = "HTTP"
+      port        = 8080
+      target_type = "instance"
+      target_id   = module.ec2[0].id
       health_check = {
+        enabled             = true
         path                = "/status.php"
         port                = "8080"
         protocol            = "HTTP"
-        interval            = 30
-        timeout             = 5
-        healthy_threshold   = 2
-        unhealthy_threshold = 2
+        interval            = 60
+        timeout             = 15
+        healthy_threshold   = 3
+        unhealthy_threshold = 3
+        matcher             = "200,301"
       }
     }
   }
@@ -444,7 +447,7 @@ module "s3-bucket-landing" {
         storage_class = "STANDARD_IA"
       }]
       expiration = {
-        days = 7
+        days = 60
       }
       abort_incomplete_multipart_upload = {
         days_after_initiation = 7
