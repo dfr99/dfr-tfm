@@ -29,7 +29,7 @@ jobs:
         id: shellcheck
         uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38
         env:
-          SHELLCHECK_OPTS: '-e SC1090 -e SC1091 -C never'
+          SHELLCHECK_OPTS: "-e SC1090 -e SC1091 --color='never'"
         with:
           severity: error
           check_together: 'yes'
