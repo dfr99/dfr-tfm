@@ -69,6 +69,7 @@ resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_http" {
   from_port   = 80
   ip_protocol = "tcp"
   to_port     = 80
+  description = "HTTP web traffic"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_https" {
@@ -78,6 +79,7 @@ resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_https" {
   from_port   = 443
   ip_protocol = "tcp"
   to_port     = 443
+  description = "HTTPS web traffic"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_smtps" {
@@ -87,6 +89,7 @@ resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_smtps" {
   from_port   = 465
   ip_protocol = "tcp"
   to_port     = 465
+  description = "SMTPS mail traffic"
 }
 
 resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_8080" {
@@ -96,22 +99,7 @@ resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_8080" {
   from_port   = 8080
   ip_protocol = "tcp"
   to_port     = 8080
-}
-
-resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_icpmv4" {
-  security_group_id = aws_security_group.ec2_security_group.id
-
-  cidr_ipv4   = "0.0.0.0/0"
-  from_port   = -1
-  ip_protocol = "icmp"
-  to_port     = -1
-}
-
-resource "aws_vpc_security_group_ingress_rule" "ec2_ingress_allow_icpmv6" {
-  security_group_id = aws_security_group.ec2_security_group.id
-
-  cidr_ipv6   = "::/0"
-  ip_protocol = "icmpv6"
+  description = "NextCloud web traffic"
 }
 
 resource "aws_vpc_security_group_egress_rule" "ec2_egress_allow_all_ipv4" {
@@ -119,6 +107,7 @@ resource "aws_vpc_security_group_egress_rule" "ec2_egress_allow_all_ipv4" {
 
   cidr_ipv4   = "0.0.0.0/0"
   ip_protocol = -1
+  description = "Allow all IPv4 outbound traffic"
 }
 
 resource "aws_vpc_security_group_egress_rule" "ec2_egress_allow_all_ipv6" {
@@ -126,6 +115,7 @@ resource "aws_vpc_security_group_egress_rule" "ec2_egress_allow_all_ipv6" {
 
   cidr_ipv6   = "::/0"
   ip_protocol = -1
+  description = "Allow all IPv6 outbound traffic"
 }
 
 ###############################################################################
@@ -395,23 +385,35 @@ module "s3-bucket-logs" {
   block_public_acls   = true
   block_public_policy = true
 
+  force_destroy = true
+
+  ignore_public_acls = true
+
   lifecycle_rule = [
     {
-      id     = "expire"
+      id     = "cycle"
       status = "Enabled"
-      prefix = "logs/"
-      transition = [{
-        days          = 30
-        storage_class = "STANDARD_IA"
-      }]
+      prefix = "/"
+      transition = [
+        {
+          days          = 30
+          storage_class = "STANDARD_IA"
+        },
+        {
+          days          = 90
+          storage_class = "GLACIER"
+        }
+      ]
       expiration = {
-        days = 90
+        days = 180
       }
       abort_incomplete_multipart_upload = {
         days_after_initiation = 7
       }
     }
   ]
+
+  restrict_public_buckets = true
 
   versioning = {
     enabled = true
@@ -428,17 +430,21 @@ module "s3-bucket-landing" {
   block_public_acls   = true
   block_public_policy = true
 
+  force_destroy = true
+
+  ignore_public_acls = true
+
   lifecycle_rule = [
     {
       id     = "expire"
       status = "Enabled"
-      prefix = "logs/"
+      prefix = "/"
       transition = [{
         days          = 30
         storage_class = "STANDARD_IA"
       }]
       expiration = {
-        days = 90
+        days = 7
       }
       abort_incomplete_multipart_upload = {
         days_after_initiation = 7
@@ -446,6 +452,8 @@ module "s3-bucket-landing" {
     }
   ]
 
+  restrict_public_buckets = true
+  
   versioning = {
     enabled = true
     status  = "Enabled"
@@ -460,6 +468,10 @@ module "s3-bucket-landing" {
 #   bucket              = "${var.name_prefix}-staging-bucket"
 #   block_public_acls   = true
 #   block_public_policy = true
+
+#   force_destroy = true
+
+#   ignore_public_acls = true
 
 #   lifecycle_rule = [
 #     {
@@ -483,6 +495,8 @@ module "s3-bucket-landing" {
 #     target_bucket = "${var.name_prefix}-logging-bucket"
 #     target_prefix = "${var.name_prefix}-staging-bucket/"
 #   }
+
+#  restrict_public_buckets = true
 
 #   versioning = {
 #     enabled = true
