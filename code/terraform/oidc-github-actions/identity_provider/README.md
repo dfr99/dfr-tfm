@@ -1,5 +1,3 @@
-# oidc_github_actions/identity_provider
-
 <!-- BEGIN_TF_DOCS -->
 # OIDC Github Actions: Identity Provider Terraform configuration
 

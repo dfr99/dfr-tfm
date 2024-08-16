@@ -1,5 +1,3 @@
-# oidc_github_actions/iam_role
-
 <!-- BEGIN_TF_DOCS -->
 # OIDC GitHub Actions: IAM Role Terraform configuration
 

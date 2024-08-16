@@ -1,5 +1,3 @@
-# github-runner
-
 <!-- BEGIN_TF_DOCS -->
 # Github Runner Terraform configuration
 
