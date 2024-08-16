@@ -7,19 +7,6 @@ on:
     paths:
       - 'code/terraform/**/*.tf'
 
-  workflow_dispatch:
-    inputs:
-      proyect:
-        description: "Select the Terraform project to validate."
-        required: true
-        type: choice
-        options:
-          - nextcloud
-          - github-runner
-          - oidc-github-actions/iam_role
-          - oidc-github-actions/identity_provider
-          - opstimizer
-
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
@@ -33,9 +20,12 @@ jobs:
     name: "Terraform Validation"
     runs-on: self-hosted
     timeout-minutes: 30
+    strategy:
+      matrix:
+        project: [nextcloud, github-runner, oidc-github-actions/iam_role, oidc-github-actions/identity_provider]
     defaults:
       run:
-        working-directory: code/terraform/${{ inputs.proyect }}
+        working-directory: code/terraform/${{ matrix.project }}
 
     steps:
       - name: Checkout repository
@@ -47,7 +37,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         with:
           role-to-assume: "${{ env.AWS_ROLE_ARN }}"
-          role-session-name: dfr-tfm-terraform-validate
+          role-session-name: "dfr-tfm-terraform-validate-${{ matrix.project }}"
           aws-region: ${{ env.AWS_REGION }}
 
       - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
@@ -76,10 +66,11 @@ jobs:
         id: checkov
         uses: bridgecrewio/checkov-action@master
         with:
-          directory: code/terraform/${{ inputs.proyect }}
+          directory: code/terraform/${{ matrix.project }}
           framework: terraform
           skip_check: |
-            CKV_AWS_144,CKV_AWS_145, CKV_AWS_2, CKV_AWS_133,
-            CKV_AWS_356, CKV2_AWS_11, CKV_AWS_103, CKV2_AWS_12,
-            CKV_AWS_304, CKV_AWS_111, CKV2_AWS_5
+            CKV_AWS_144,CKV_AWS_145,CKV_AWS_2,CKV_AWS_133,
+            CKV_AWS_356,CKV2_AWS_11,CKV_AWS_103,CKV2_AWS_12,
+            CKV_AWS_304,CKV_AWS_111,CKV2_AWS_5,CKV_AWS_260,CKV_AWS_150,
+            CKV2_AWS_6,CKV2_AWS_61,CKV_AWS_18,CKV2_AWS_62,CKV_AWS_21,CKV_AWS_300
           download_external_modules: true

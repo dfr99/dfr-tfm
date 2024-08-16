@@ -1,3 +1,7 @@
+/**
+ * # OIDC Github Actions: Identity Provider Terraform configuration
+ */
+
 terraform {
   required_version = "1.8.5"
 

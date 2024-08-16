@@ -1,3 +1,7 @@
+/**
+ * # OIDC GitHub Actions: IAM Role Terraform configuration
+ */
+
 terraform {
   required_version = "1.8.5"
 
