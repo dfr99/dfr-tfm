@@ -52,6 +52,7 @@ No modules.
 |------|------|
 | [aws_iam_role.oidc_github_role](https://registry.terraform.io/providers/hashicorp/aws/5.56.1/docs/resources/iam_role) | resource |
 | [aws_iam_role_policy_attachment.permisions](https://registry.terraform.io/providers/hashicorp/aws/5.56.1/docs/resources/iam_role_policy_attachment) | resource |
+| [aws_resourcegroups_group.github_runner](https://registry.terraform.io/providers/hashicorp/aws/5.56.1/docs/resources/resourcegroups_group) | resource |
 ## Inputs
 
 | Name | Description | Type | Default | Required |

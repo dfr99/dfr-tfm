@@ -8,3 +8,9 @@ variable "gh_pat" {
     error_message = "The GH PAT must be valid. Syntax is \"ghp_<token_body>\"."
   }
 }
+
+variable "name_prefix" {
+  type        = string
+  description = "Prefix for the name of the resources"
+  default     = "github-runner"
+}
