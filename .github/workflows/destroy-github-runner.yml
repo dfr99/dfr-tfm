@@ -31,7 +31,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         with:
           role-to-assume: "${{ env.AWS_ROLE_ARN }}"
-          role-session-name: dfr-tfm-terraform-validate
+          role-session-name: dfr-tfm-terraform-destroy-github-runner
           aws-region: ${{ env.AWS_REGION }}
 
       - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
