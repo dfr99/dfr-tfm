@@ -40,7 +40,8 @@ terraform.rc
 venv/
 
 # Certificates folder
-**/certs/
+**/certs/*.csr
+**/certs/rootCA*
 
 # Checkov folder
 .external_modules
