@@ -34,10 +34,9 @@ chmod +x ./create-latest-svc.sh
 
 ./create-latest-svc.sh \
     -s dfr99/dfr-tfm \
-    -n dfr-tfm-aws \
+    -n dfr-tfm \
     -l aws,${aws_account},${aws_region},ec2
 
 rm -rf ./*.tar.gz
-rm -rf ./create-latest-svc.sh
 
 EOF

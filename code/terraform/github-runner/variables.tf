@@ -12,5 +12,5 @@ variable "gh_pat" {
 variable "name_prefix" {
   type        = string
   description = "Prefix for the name of the resources"
-  default = "github-runner"
+  default     = "github-runner"
 }
