@@ -14,7 +14,7 @@
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_ec2"></a> [ec2](#module\_ec2) | terraform-aws-modules/ec2-instance/aws | 5.6.1 |
+| <a name="module_ec2"></a> [ec2](#module\_ec2) | git::https://github.com/terraform-aws-modules/terraform-aws-ec2-instance.git | 4f8387d0925510a83ee3cb88c541beb77ce4bad6 |
 ## Resources
 
 | Name | Type |
