@@ -1,6 +1,7 @@
 # oidc_github_actions/iam_role
 
 <!-- BEGIN_TF_DOCS -->
+# OIDC GitHub Actions: IAM Role Terraform configuration
 
 ## Requirements
 
@@ -32,7 +33,7 @@ No modules.
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
 | <a name="input_oidc_github_arn"></a> [oidc\_github\_arn](#input\_oidc\_github\_arn) | The ARN assigned by AWS for this OIDC GitHub provider | `string` | n/a | yes |
-| <a name="input_permisions"></a> [permisions](#input\_permisions) | ARN of the default policies to attach to the role | `map(string)` | <pre>{<br>  "admin": "arn:aws:iam::aws:policy/AdministratorAccess",<br>  "readonly": "arn:aws:iam::aws:policy/ReadOnlyAccess"<br>}</pre> | no |
+| <a name="input_permisions"></a> [permisions](#input\_permisions) | ARN of the default policies to attach to the role | `map(string)` | ```{ "admin": "arn:aws:iam::aws:policy/AdministratorAccess", "readonly": "arn:aws:iam::aws:policy/ReadOnlyAccess" }``` | no |
 | <a name="input_repository"></a> [repository](#input\_repository) | The GitHub repository name | `string` | n/a | yes |
 
 ## Outputs
@@ -40,5 +41,4 @@ No modules.
 | Name | Description |
 |------|-------------|
 | <a name="output_oidc_github_role_arn"></a> [oidc\_github\_role\_arn](#output\_oidc\_github\_role\_arn) | n/a |
-
 <!-- END_TF_DOCS -->

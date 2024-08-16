@@ -1,6 +1,7 @@
 # oidc_github_actions/identity_provider
 
 <!-- BEGIN_TF_DOCS -->
+# OIDC Github Actions: Identity Provider Terraform configuration
 
 ## Requirements
 
@@ -35,5 +36,4 @@ No inputs.
 | Name | Description |
 |------|-------------|
 | <a name="output_oidc_github_arn"></a> [oidc\_github\_arn](#output\_oidc\_github\_arn) | n/a |
-
 <!-- END_TF_DOCS -->
