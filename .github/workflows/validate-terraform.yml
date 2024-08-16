@@ -22,7 +22,12 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        project: [nextcloud, github-runner, oidc-github-actions/iam_role, oidc-github-actions/identity_provider]
+        project: [
+          nextcloud,
+          github-runner,
+          oidc-github-actions/iam_role,
+          oidc-github-actions/identity_provider
+        ]
     defaults:
       run:
         working-directory: code/terraform/${{ matrix.project }}
@@ -68,7 +73,7 @@ jobs:
         with:
           directory: code/terraform/${{ matrix.project }}
           framework: terraform
-          skip_check: |
+          skip_check: >
             CKV_AWS_144,CKV_AWS_145,CKV_AWS_2,CKV_AWS_133,
             CKV_AWS_356,CKV2_AWS_11,CKV_AWS_103,CKV2_AWS_12,
             CKV_AWS_304,CKV_AWS_111,CKV2_AWS_5,CKV_AWS_260,CKV_AWS_150,
