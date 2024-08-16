@@ -1,10 +1,10 @@
 ---
-name: 'Markdown Lint'
+name: 'Shell Check'
 
 on:
   pull_request:
     paths:
-      - '**/*.md'
+      - '**/*.sh'
 
 env:
   GH_PAT: ${{ secrets.GH_PAT }}
@@ -13,20 +13,23 @@ permissions:
   contents: read
 
 jobs:
-  markdownlint:
-    name: 'Markdown Lint'
+  shellcheck:
+    name: 'Shell Check'
     runs-on: self-hosted
     timeout-minutes: 30
 
     steps:
       - name: Checkout repository
+        id: checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
         with:
           ref: ${{ github.event.pull_request.head.ref }}
 
-      - name: markdownlint-cli2-action
-        uses: DavidAnson/markdownlint-cli2-action@b4c9feab76d8025d1e83c653fa3990936df0e6c8
+      - name: 'Shell Check'
+        id: shellcheck
+        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38
+        env:
+          SHELLCHECK_OPTS: '--color=never'
         with:
-          config: '.markdownlint-cli2.yaml'
-          globs: '**/*.md'
-        continue-on-error: true
+          severity: error
+          check_together: 'yes'

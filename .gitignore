@@ -34,7 +34,17 @@ override.tf.json
 terraform.rc
 
 # Plans folder
-**/plans/*
+**/plans/
 
 # Python virtual environment
 venv/
+
+# Certificates folder
+**/certs/*.csr
+**/certs/rootCA*
+
+# Checkov folder
+.external_modules
+
+# Docker env file
+.env
