@@ -201,8 +201,8 @@ module "alb" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-alb.git?ref=ce3014eea6f44d5078b76ddc92f1cbe0df418cd2"
 
   access_logs = {
-    bucket = module.s3-bucket-logs.s3_bucket_id
-    prefix = "alb/access"
+    bucket  = module.s3-bucket-logs.s3_bucket_id
+    prefix  = "alb/access"
     enabled = true
   }
 
@@ -212,7 +212,7 @@ module "alb" {
     enabled = true
   }
 
-  enable_deletion_protection = false
+  enable_deletion_protection                  = false
   enable_tls_version_and_cipher_suite_headers = true
 
   listeners = {
@@ -231,7 +231,7 @@ module "alb" {
       protocol        = "HTTPS"
       ssl_policy      = "ELBSecurityPolicy-TLS13-1-2-2021-06"
       certificate_arn = aws_acm_certificate.cert.arn
-      
+
       forward = {
         target_group_key = "nextcloud"
       }
@@ -384,9 +384,9 @@ module "s3-bucket-logs" {
   source = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
 
   attach_policy = true
-  policy       = templatefile("${path.module}/templates/iam_policies/alb_logging_bucket_policy.tftpl", {
-    aws_account_id = "054676820928",
-    s3_alb_access_logs = "arn:aws:s3:::${var.name_prefix}-logging-bucket/alb/access/*",
+  policy = templatefile("${path.module}/templates/iam_policies/alb_logging_bucket_policy.tftpl", {
+    aws_account_id          = "054676820928",
+    s3_alb_access_logs      = "arn:aws:s3:::${var.name_prefix}-logging-bucket/alb/access/*",
     s3_alb_connections_logs = "arn:aws:s3:::${var.name_prefix}-logging-bucket/alb/connections/*"
   })
 
