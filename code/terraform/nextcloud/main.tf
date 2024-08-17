@@ -292,10 +292,10 @@ resource "aws_vpc_security_group_ingress_rule" "rds_ingress_allow_psql_from_vpc"
   security_group_id = aws_security_group.rds_security_group.id
 
   cidr_ipv4   = module.vpc.vpc_cidr_block
-  from_port   = 5432
+  from_port   = 3306
   ip_protocol = "tcp"
-  to_port     = 5432
-  description = "PostgreSQL traffic from VPC"
+  to_port     = 3306
+  description = "MySQL traffic from VPC"
 }
 
 resource "aws_vpc_security_group_egress_rule" "rds_egress_allow_all" {
@@ -310,7 +310,7 @@ resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv6" {
   security_group_id = aws_security_group.rds_security_group.id
   cidr_ipv6         = "::/0"
   ip_protocol       = "-1" # semantically equivalent to all ports
-  description = "Allow all IPv6 outbound traffic"
+  description       = "Allow all IPv6 outbound traffic"
 }
 
 ##############################################################################
@@ -337,16 +337,16 @@ module "rds" {
   db_subnet_group_description = "DB subnet group for NextCloud RDS instance"
   db_subnet_group_name        = "${var.name_prefix}-db-subnet-group"
 
-  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
-  engine                          = "postgres"
-  engine_version                  = "16.3"
+  enabled_cloudwatch_logs_exports = ["audit", "error", "general", "slowquery"]
+  engine                          = "mysql"
+  engine_version                  = "8.0.39"
 
-  family = "postgres16"
+  family = "mysql8.0"
 
   instance_class = "db.t3.medium"
 
   maintenance_window                                     = "Mon:04:00-Mon:05:00"
-  major_engine_version                                   = "16"
+  major_engine_version                                   = "8"
   manage_master_user_password                            = true
   manage_master_user_password_rotation                   = true
   master_user_password_rotation_automatically_after_days = 90
