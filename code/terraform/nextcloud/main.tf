@@ -573,23 +573,27 @@ module "s3-landing-notification-sqs" {
       sid     = "AllowS3BucketNotification"
       effect  = "Allow"
       actions = ["sqs:SendMessage"]
-      principals = {
-        type        = "Service"
-        identifiers = ["s3.amazonaws.com"]
-      }
-      conditions = {
-        ArnLike = {
-          awsSourceArn = module.s3-bucket-landing.s3_bucket_arn
+      principals = [
+        {
+          type        = "Service"
+          identifiers = ["s3.amazonaws.com"]
         }
-        StringEquals = {
-          awsSourceAccount = local.aws_account_id
+      ]
+      conditions = [
+        {
+          test     = "StringEquals"
+          variable = "aws:SourceAccount"
+          values   = [module.s3-bucket-landing.s3_bucket_arn]
+        },
+        {
+          test     = "ArnLike"
+          variable = "aws:SourceArn"
+          values   = [module.s3-bucket-landing.s3_bucket_arn]
         }
-      }
+      ]
     }
   }
 }
-
-
 
 ###############################################################################
 
