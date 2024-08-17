@@ -282,94 +282,97 @@ module "alb" {
 
 ###############################################################################
 
-# resource "aws_security_group" "rds_security_group" {
-#   name        = "${var.name_prefix}-rds-sg"
-#   description = "Security group for NextCloud RDS instance"
-#   vpc_id      = module.vpc.vpc_id
-# }
+resource "aws_security_group" "rds_security_group" {
+  name        = "${var.name_prefix}-rds-sg"
+  description = "Security group for NextCloud RDS instance"
+  vpc_id      = module.vpc.vpc_id
+}
 
-# resource "aws_vpc_security_group_ingress_rule" "rds_ingress_allow_psql_from_vpc" {
-#   security_group_id = aws_security_group.rds_security_group.id
+resource "aws_vpc_security_group_ingress_rule" "rds_ingress_allow_psql_from_vpc" {
+  security_group_id = aws_security_group.rds_security_group.id
 
-#   cidr_ipv4   = module.vpc.vpc_cidr_block
-#   from_port   = 5432
-#   ip_protocol = "tcp"
-#   to_port     = 5432
-# }
+  cidr_ipv4   = module.vpc.vpc_cidr_block
+  from_port   = 5432
+  ip_protocol = "tcp"
+  to_port     = 5432
+  description = "PostgreSQL traffic from VPC"
+}
 
-# resource "aws_vpc_security_group_egress_rule" "rds_egress_allow_all" {
-#   security_group_id = aws_security_group.rds_security_group.id
+resource "aws_vpc_security_group_egress_rule" "rds_egress_allow_all" {
+  security_group_id = aws_security_group.rds_security_group.id
 
-#   cidr_ipv4   = "0.0.0.0/0"
-#   ip_protocol = -1
-# }
+  cidr_ipv4   = "0.0.0.0/0"
+  ip_protocol = -1
+  description = "Allow all IPv4 outbound traffic"
+}
 
-# resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv6" {
-#   security_group_id = aws_security_group.rds_security_group.id
-#   cidr_ipv6         = "::/0"
-#   ip_protocol       = "-1" # semantically equivalent to all ports
-# }
+resource "aws_vpc_security_group_egress_rule" "allow_all_traffic_ipv6" {
+  security_group_id = aws_security_group.rds_security_group.id
+  cidr_ipv6         = "::/0"
+  ip_protocol       = "-1" # semantically equivalent to all ports
+  description = "Allow all IPv6 outbound traffic"
+}
 
-###############################################################################
+##############################################################################
 
-# module "rds" {
-#   source = "git::https://github.com/terraform-aws-modules/terraform-aws-rds.git?ref=a4ae4a51545f5cb617d30b716f6bf11840c76a0e"
+module "rds" {
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-rds.git?ref=a4ae4a51545f5cb617d30b716f6bf11840c76a0e"
 
-#   identifier = "${var.name_prefix}-rds"
+  identifier = "${var.name_prefix}-rds"
 
-#   allocated_storage           = 20
-#   allow_major_version_upgrade = true
-#   auto_minor_version_upgrade  = true
+  allocated_storage           = 20
+  allow_major_version_upgrade = true
+  auto_minor_version_upgrade  = true
 
-#   backup_retention_period = 7
-#   backup_window           = "03:00-04:00"
+  backup_retention_period = 7
+  backup_window           = "03:00-04:00"
 
-#   cloudwatch_log_group_class             = "INFREQUENT_ACCESS"
-#   cloudwatch_log_group_retention_in_days = 365
-#   create_cloudwatch_log_group            = true
-#   create_db_subnet_group                 = true
-#   create_monitoring_role                 = true
+  cloudwatch_log_group_class             = "INFREQUENT_ACCESS"
+  cloudwatch_log_group_retention_in_days = 365
+  create_cloudwatch_log_group            = true
+  create_db_subnet_group                 = true
+  create_monitoring_role                 = true
 
-#   db_name                     = "nextcloud"
-#   db_subnet_group_description = "DB subnet group for NextCloud RDS instance"
-#   db_subnet_group_name        = "${var.name_prefix}-db-subnet-group"
+  db_name                     = "nextcloud"
+  db_subnet_group_description = "DB subnet group for NextCloud RDS instance"
+  db_subnet_group_name        = "${var.name_prefix}-db-subnet-group"
 
-#   enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
-#   engine                          = "postgres"
-#   engine_version                  = "16.3"
+  enabled_cloudwatch_logs_exports = ["postgresql", "upgrade"]
+  engine                          = "postgres"
+  engine_version                  = "16.3"
 
-#   family = "postgres16"
+  family = "postgres16"
 
-#   instance_class = "db.t3.medium"
+  instance_class = "db.t3.medium"
 
-#   maintenance_window                                     = "Mon:04:00-Mon:05:00"
-#   major_engine_version                                   = "16"
-#   manage_master_user_password                            = true
-#   manage_master_user_password_rotation                   = true
-#   master_user_password_rotation_automatically_after_days = 90
-#   max_allocated_storage                                  = 40
-#   monitoring_interval                                    = 60
-#   monitoring_role_description                            = "Role for RDS monitoring"
-#   monitoring_role_name                                   = "${var.name_prefix}-rds-monitoring-role"
-#   multi_az                                               = false
+  maintenance_window                                     = "Mon:04:00-Mon:05:00"
+  major_engine_version                                   = "16"
+  manage_master_user_password                            = true
+  manage_master_user_password_rotation                   = true
+  master_user_password_rotation_automatically_after_days = 90
+  max_allocated_storage                                  = 40
+  monitoring_interval                                    = 60
+  monitoring_role_description                            = "Role for RDS monitoring"
+  monitoring_role_name                                   = "${var.name_prefix}-rds-monitoring-role"
+  multi_az                                               = false
 
-#   option_group_description = "Option group for NextCloud RDS instance"
-#   option_group_name        = "${var.name_prefix}-rds-option-group"
+  option_group_description = "Option group for NextCloud RDS instance"
+  option_group_name        = "${var.name_prefix}-rds-option-group"
 
-#   parameter_group_description = "Parameter group for NextCloud RDS instance"
-#   parameter_group_name        = "${var.name_prefix}-rds-parameter-group"
+  parameter_group_description = "Parameter group for NextCloud RDS instance"
+  parameter_group_name        = "${var.name_prefix}-rds-parameter-group"
 
-#   password                              = var.rds_password
-#   performance_insights_enabled          = true
-#   performance_insights_retention_period = 7
+  password                              = var.rds_password
+  performance_insights_enabled          = true
+  performance_insights_retention_period = 7
 
-#   storage_type = "gp3"
-#   subnet_ids   = module.vpc.private_subnets
+  storage_type = "gp3"
+  subnet_ids   = module.vpc.private_subnets
 
-#   username = var.name_prefix
+  username = var.name_prefix
 
-#   vpc_security_group_ids = [aws_security_group.rds_security_group.id]
-# }
+  vpc_security_group_ids = [aws_security_group.rds_security_group.id]
+}
 
 ###############################################################################
 
@@ -378,7 +381,7 @@ module "s3-bucket-logs" {
 
   attach_policy = true
   policy = templatefile("${path.module}/templates/iam_policies/alb_logging_bucket_policy.tftpl", {
-    aws_account_id          = "054676820928",
+    aws_account_id          = var.alb_account_id,
     s3_alb_access_logs      = "arn:aws:s3:::${var.name_prefix}-logging-bucket/alb/access/*",
     s3_alb_connections_logs = "arn:aws:s3:::${var.name_prefix}-logging-bucket/alb/connections/*"
   })
@@ -455,6 +458,11 @@ module "s3-bucket-landing" {
     }
   ]
 
+  logging = {
+    target_bucket = "${var.name_prefix}-logging-bucket"
+    target_prefix = "${var.name_prefix}-landing-bucket/"
+  }
+
   restrict_public_buckets = true
 
   versioning = {
@@ -465,47 +473,47 @@ module "s3-bucket-landing" {
 
 ###############################################################################
 
-# module "s3-bucket-staging" {
-#   source = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
+module "s3-bucket-staging" {
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-s3-bucket.git?ref=8a0b697adfbc673e6135c70246cff7f8052ad95a"
 
-#   bucket              = "${var.name_prefix}-staging-bucket"
-#   block_public_acls   = true
-#   block_public_policy = true
+  bucket              = "${var.name_prefix}-staging-bucket"
+  block_public_acls   = true
+  block_public_policy = true
 
-#   force_destroy = true
+  force_destroy = true
 
-#   ignore_public_acls = true
+  ignore_public_acls = true
 
-#   lifecycle_rule = [
-#     {
-#       id     = "expire"
-#       status = "Enabled"
-#       prefix = "logs/"
-#       transition = [{
-#         days          = 30
-#         storage_class = "STANDARD_IA"
-#       }]
-#       expiration = {
-#         days = 90
-#       }
-#       abort_incomplete_multipart_upload = {
-#         days_after_initiation = 7
-#       }
-#     }
-#   ]
+  lifecycle_rule = [
+    {
+      id     = "expire"
+      status = "Enabled"
+      prefix = "/"
+      transition = [{
+        days          = 30
+        storage_class = "STANDARD_IA"
+      }]
+      expiration = {
+        days = 90
+      }
+      abort_incomplete_multipart_upload = {
+        days_after_initiation = 7
+      }
+    }
+  ]
 
-#   logging = {
-#     target_bucket = "${var.name_prefix}-logging-bucket"
-#     target_prefix = "${var.name_prefix}-staging-bucket/"
-#   }
+  logging = {
+    target_bucket = "${var.name_prefix}-logging-bucket"
+    target_prefix = "${var.name_prefix}-staging-bucket/"
+  }
 
-#  restrict_public_buckets = true
+  restrict_public_buckets = true
 
-#   versioning = {
-#     enabled = true
-#     status  = "Enabled"
-#   }
-# }
+  versioning = {
+    enabled = true
+    status  = "Enabled"
+  }
+}
 
 ###############################################################################
 
@@ -528,3 +536,160 @@ resource "aws_resourcegroups_group" "github_runner" {
     "Name" = "${var.name_prefix}-rg"
   }
 }
+
+###############################################################################
+
+# module "" {
+#   source  = "git::https://github.com/terraform-aws-modules/terraform-aws-ssm-parameter.git?ref=b7659e8b46aa626065c60fbfa7b78c1fedf43d7c¨9"
+
+#   for_each = local.parameters
+
+#   name            = try(each.value.name, each.key)
+#   value           = try(each.value.value, null)
+#   values          = try(each.value.values, [])
+#   type            = try(each.value.type, null)
+#   secure_type     = try(each.value.secure_type, null)
+#   description     = try(each.value.description, null)
+#   tier            = try(each.value.tier, null)
+#   key_id          = try(each.value.key_id, null)
+#   allowed_pattern = try(each.value.allowed_pattern, null)
+#   data_type       = try(each.value.data_type, null)
+# }
+
+###############################################################################
+
+# https://docs.aws.amazon.com/AmazonS3/latest/userguide/ways-to-add-notification-config-to-bucket.html#step1-create-sqs-queue-for-notification
+
+module "s3-landing-notification-sqs" {
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-sqs.git?ref=8c18f70fd765db2adf31edf5fc15b3058367e5a2"
+
+  create              = true
+  create_queue_policy = true
+
+  name = "${var.name_prefix}-s3-landing-notification-sqs"
+
+  queue_policy_statements = {
+    s3_bucket_notification = {
+      sid     = "AllowS3BucketNotification"
+      effect  = "Allow"
+      actions = ["sqs:SendMessage"]
+      principals = {
+        type        = "Service"
+        identifiers = ["s3.amazonaws.com"]
+      }
+      conditions = {
+        ArnLike = {
+          awsSourceArn = module.s3-bucket-landing.s3_bucket_arn
+        }
+        StringEquals = {
+          awsSourceAccount = local.aws_account_id
+        }
+      }
+    }
+  }
+}
+
+
+
+###############################################################################
+
+module "s3-sns-topic" {
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-sns?ref=6404f81a23544d2aba6c9c178cdf97290cee0e90"
+
+  create              = true
+  create_subscription = true
+
+  display_name = "S3 SNS Topic"
+
+  enable_default_topic_policy = true
+
+  name = "${var.name_prefix}-s3-sns-topic"
+
+  signature_version = 2
+
+  subscriptions = {
+    email = {
+      protocol = "email"
+      endpoint = var.s3_sns_topic_email
+    }
+  }
+
+  tags = {
+    Name = "${var.name_prefix}-s3-sns-topic"
+  }
+}
+
+module "lambda-sns-topic" {
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-sns?ref=6404f81a23544d2aba6c9c178cdf97290cee0e90"
+
+  create              = true
+  create_subscription = true
+
+  display_name = "Lambda SNS Topic"
+
+  enable_default_topic_policy = true
+
+  name = "${var.name_prefix}-lambda-sns-topic"
+
+  signature_version = 2
+
+  subscriptions = {
+    email = {
+      protocol = "email"
+      endpoint = var.lambda_sns_topic_email
+    }
+  }
+
+  tags = {
+    Name = "${var.name_prefix}-lambda-sns-topic"
+  }
+}
+
+module "sfm-sns-topic" {
+  source = "git::https://github.com/terraform-aws-modules/terraform-aws-sns?ref=6404f81a23544d2aba6c9c178cdf97290cee0e90"
+
+  create              = true
+  create_subscription = true
+
+  display_name = "Step Functions SNS Topic"
+
+  enable_default_topic_policy = true
+
+  name = "${var.name_prefix}-sfm-sns-topic"
+
+  signature_version = 2
+
+  subscriptions = {
+    email = {
+      protocol = "email"
+      endpoint = var.sfm_sns_topic_email
+    }
+  }
+
+  tags = {
+    Name = "${var.name_prefix}-sfm-sns-topic"
+  }
+}
+###############################################################################
+
+# module "" {
+#   source = "git::https://github.com/terraform-aws-modules/terraform-aws-lambda.git?ref=f48be17ec03a53b85b7da1f2ad8787792f2425ee"
+# }
+
+# ###############################################################################
+
+# resource "aws_glue_job" "example" {
+#   name     = "example"
+#   role_arn = aws_iam_role.example.arn
+
+#   command {
+#     script_location = "s3://${aws_s3_bucket.example.bucket}/example.py"
+#   }
+# }
+
+# ###############################################################################
+
+# module "" {
+#   source  = "gitt:https://github.com/terraform-aws-modules/terraform-aws-step-functions.git?ref=14d513560d56c2876982bc687c98e4cb6ec3bc17"
+
+# }
