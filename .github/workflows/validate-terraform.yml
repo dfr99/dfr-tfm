@@ -28,7 +28,7 @@ jobs:
           github-runner,
           oidc-github-actions/iam_role,
           oidc-github-actions/identity_provider,
-          cognito-groups,
+          cognito-group,
           cognito-users
         ]
     defaults:
