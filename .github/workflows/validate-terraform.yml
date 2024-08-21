@@ -27,7 +27,9 @@ jobs:
           nextcloud,
           github-runner,
           oidc-github-actions/iam_role,
-          oidc-github-actions/identity_provider
+          oidc-github-actions/identity_provider,
+          cognito-group,
+          cognito-user
         ]
     defaults:
       run:
