@@ -58,8 +58,8 @@ jobs:
         id: workspace
         run: terraform workspace select -or-create ${{ inputs.group_name }}
 
-      - name: Terraform apply
-        id: apply
+      - name: Terraform destroy
+        id: destroy
         run: |
           export TF_VAR_cognito_user_pool_id="${{ env.COGNITO_USER_POOL_ID }}"
           export TF_VAR_group_name="${{ inputs.group_name }}"
