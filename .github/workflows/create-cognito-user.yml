@@ -12,7 +12,7 @@ on:
         required: true
         type: string
         default: "regulars"
-        description: "The name of the group to which the user is to be added"
+        description: "The name of the group to which the user is to be added (do not create the group)"
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
@@ -41,7 +41,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         with:
           role-to-assume: "${{ env.AWS_ROLE_ARN }}"
-          role-session-name: dfr-tfm-terraform-deploy-github-runner
+          role-session-name: dfr-tfm-terraform-create-cognito-user
           aws-region: ${{ env.AWS_REGION }}
 
       - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
@@ -68,7 +68,7 @@ jobs:
           export TF_VAR_cognito_user_pool_id="${{ env.COGNITO_USER_POOL_ID }}"
           export TF_VAR_cognito_username="${{ inputs.username }}"
           export TF_VAR_cognito_user_group="${{ inputs.user_group }}"
-          terraform plan -out="./github-runner-plan" -no-color
+          terraform plan -out="./cognito-user-plan" -no-color
 
       - name: Terraform apply
         id: apply
@@ -76,4 +76,4 @@ jobs:
           export TF_VAR_cognito_user_pool_id="${{ env.COGNITO_USER_POOL_ID }}"
           export TF_VAR_cognito_username="${{ inputs.username }}"
           export TF_VAR_cognito_user_group="${{ inputs.user_group }}"
-          terraform apply ./github-runner-plan -no-color
+          terraform apply ./cognito-user-plan -no-color

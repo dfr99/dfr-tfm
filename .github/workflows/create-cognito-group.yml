@@ -1,18 +1,14 @@
 ---
-name: Delete Cognito user
+name: Create Cognito Group
 
 on:
   workflow_dispatch:
     inputs:
-      username:
-        required: true
-        type: string
-        description: "The username for the user. Must be unique within the user pool. Must be a UTF-8 string between 1 and 128 characters. After the user is created, the username cannot be changed."
-      user_group:
+      group_name:
         required: true
         type: string
         default: "regulars"
-        description: "The name of the group to which the user is to be deleted (do not delete the group)."
+        description: "The name of the group to be created."
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
@@ -24,13 +20,13 @@ permissions:
   contents: read
 
 jobs:
-  DeleteCognitoUser:
-    name: "Delete Cognito user"
+  CreateCognitoUser:
+    name: "Create Cognito group"
     runs-on: self-hosted
     timeout-minutes: 30
     defaults:
       run:
-        working-directory: code/terraform/cognito-user
+        working-directory: "./code/terraform/cognito-group"
 
     steps:
       - name: Checkout repository
@@ -41,7 +37,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502
         with:
           role-to-assume: "${{ env.AWS_ROLE_ARN }}"
-          role-session-name: dfr-tfm-terraform-delete-cognito-user
+          role-session-name: dfr-tfm-terraform-create-cognito-group
           aws-region: ${{ env.AWS_REGION }}
 
       - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b
@@ -60,12 +56,18 @@ jobs:
 
       - name: Terraform workspace
         id: workspace
-        run: terraform workspace select ${{ inputs.username }}
+        run: terraform workspace select -or-create ${{ inputs.group_name }}
 
-      - name: Terraform destroy
-        id: destroy
+      - name: Terraform plan
+        id: plan
         run: |
           export TF_VAR_cognito_user_pool_id="${{ env.COGNITO_USER_POOL_ID }}"
-          export TF_VAR_cognito_username="${{ inputs.username }}"
-          export TF_VAR_cognito_user_group="${{ inputs.user_group }}"
-          terraform destroy -auto-approve -no-color
+          export TF_VAR_group_name="${{ inputs.group_name }}"
+          terraform plan -out="./cognito-group-plan" -no-color
+
+      - name: Terraform apply
+        id: apply
+        run: |
+          export TF_VAR_cognito_user_pool_id="${{ env.COGNITO_USER_POOL_ID }}"
+          export TF_VAR_group_name="${{ inputs.group_name }}"
+          terraform apply ./cognito-group-plan -no-color
