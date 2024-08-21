@@ -6,11 +6,18 @@ on:
     inputs:
       username:
         required: true
-        description: ""
+        type: string
+        description: "The username for the user. Must be unique within the user pool. Must be a UTF-8 string between 1 and 128 characters. After the user is created, the username cannot be changed."
+      user_group:
+        required: true
+        type: string
+        default: "regulars"
+        description: "The name of the group to which the user is to be added"
 
 env:
   AWS_REGION: ${{ vars.AWS_REGION }}
   AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+  COGNITO_USER_POOL_ID: ${{ secrets.COGNITO_USER_POOL_ID }}
 
 permissions:
   id-token: write
@@ -51,8 +58,14 @@ jobs:
         id: init
         run: terraform init -no-color
 
+      - name: Terraform workspace
+        id: workspace
+        run: terraform workspace select ${{ inputs.username }}
+
       - name: Terraform destroy
         id: destroy
         run: |
-          terraform workspace select ${{ inputs.username }}
+          export TF_VAR_cognito_user_pool_id="${{ env.COGNITO_USER_POOL_ID }}"
+          export TF_VAR_cognito_username="${{ inputs.username }}"
+          export TF_VAR_cognito_user_group="${{ inputs.user_group }}"
           terraform destroy -auto-approve -no-color
