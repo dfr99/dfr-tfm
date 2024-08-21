@@ -1,5 +1,5 @@
 ---
-name: Create Cognito user
+name: Create Cognito User
 
 on:
   workflow_dispatch:

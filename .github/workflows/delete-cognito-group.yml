@@ -1,3 +1,4 @@
+---
 name: Delete Cognito Group
 
 on:
@@ -19,8 +20,8 @@ permissions:
   contents: read
 
 jobs:
-  CreateCognitoUser:
-    name: "Create Cognito group"
+  DeleteCognitoGroup:
+    name: "Delete Cognito group"
     runs-on: self-hosted
     timeout-minutes: 30
     defaults:
@@ -62,4 +63,4 @@ jobs:
         run: |
           export TF_VAR_cognito_user_pool_id="${{ env.COGNITO_USER_POOL_ID }}"
           export TF_VAR_group_name="${{ inputs.group_name }}"
-          terraform delete -auto-approve -no-color
+          terraform destroy -auto-approve -no-color
