@@ -34,10 +34,3 @@ jobs:
         with:
           options: "--check --verbose"
           version: "24.8.0"
-
-      - name: Run flake8
-        id: flake8
-        uses: py-actions/flake8@84ec6726560b6d5bd68f2a5bed83d62b52bb50ba
-        with:
-          max-line-length: "120"
-          plugins: "flake8-black"
