@@ -24,10 +24,10 @@ provider "aws" {
   region = "eu-central-1"
   default_tags {
     tags = {
-      "Terraform" = "True"
-      "Project"   = "github-runner"
-      "Owner"     = "dfr99"
-      "Repo"      = "dfr-tfm"
+      "user:Terraform" = "True"
+      "user:Project"   = "github-runner"
+      "user:Owner"     = "dfr99"
+      "user:Repo"      = "dfr-tfm"
     }
   }
 }

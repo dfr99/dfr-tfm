@@ -24,11 +24,11 @@ provider "aws" {
   region = "eu-central-1"
   default_tags {
     tags = {
-      "OIDC"      = "GitHub"
-      "Terraform" = "True"
-      "Project"   = "oidc-github-actions/identity_provider"
-      "Owner"     = "dfr99"
-      "Repo"      = "dfr-tfm"
+      "user:OIDC"      = "GitHub"
+      "user:Terraform" = "True"
+      "user:Project"   = "oidc-github-actions/identity_provider"
+      "user:Owner"     = "dfr99"
+      "user:Repo"      = "dfr-tfm"
     }
   }
 }

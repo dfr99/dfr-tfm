@@ -93,6 +93,12 @@ module "ec2" {
 
   create               = true
   iam_instance_profile = aws_iam_instance_profile.github-runner.id
+  instance_tags = {
+    "user:Terraform" = "True"
+    "user:Project"   = "github-runner"
+    "user:Owner"     = "dfr99"
+    "user:Repo"      = "dfr-tfm"
+  }
 
   create_spot_instance                = true
   spot_price                          = "0.006"

@@ -25,10 +25,10 @@ provider "aws" {
   region = "eu-central-1"
   default_tags {
     tags = {
-      "Terraform" = "True"
-      "Project"   = "cognito-user"
-      "Owner"     = "dfr99"
-      "Repo"      = "dfr-tfm"
+      "user:Terraform" = "True"
+      "user:Project"   = "cognito-user"
+      "user:Owner"     = "dfr99"
+      "user:Repo"      = "dfr-tfm"
     }
   }
 }
