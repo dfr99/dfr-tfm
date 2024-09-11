@@ -1,0 +1,32 @@
+---
+name: 'Markdown Lint'
+
+on:
+  pull_request:
+    paths:
+      - '**/*.md'
+
+env:
+  GH_PAT: ${{ secrets.GH_PAT }}
+
+permissions:
+  contents: read
+
+jobs:
+  markdownlint:
+    name: 'Markdown Lint'
+    runs-on: self-hosted
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: markdownlint-cli2-action
+        uses: DavidAnson/markdownlint-cli2-action@b4c9feab76d8025d1e83c653fa3990936df0e6c8
+        with:
+          config: '.markdownlint-cli2.yaml'
+          globs: '**/*.md'
+        continue-on-error: true

@@ -1,0 +1,39 @@
+---
+repos:
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.92.1
+    hooks:
+      - id: terraform_fmt
+        args:
+          - --args=-no-color
+          - --args=-diff
+          - --args=-write=false
+      - id: terraform_validate
+        args:
+          - --args=-no-color
+          - --args=-json
+      - id: terraform_checkov
+        args:
+          - --args=--quiet
+          - --args=--directory=./code/terraform
+          - --args=--download-external-modules true
+          - --args=--skip-check CKV_AWS_144,CKV_AWS_145,CKV_AWS_2,CKV_AWS_133,CKV_AWS_356,CKV2_AWS_11,CKV_AWS_103,CKV2_AWS_12,CKV_AWS_304,CKV_AWS_111,CKV2_AWS_5,CKV_AWS_260,CKV_AWS_150,CKV2_AWS_6,CKV2_AWS_61,CKV_AWS_18,CKV2_AWS_62,CKV_AWS_21,CKV_AWS_300
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [
+          "-c", ".yamllint"
+        ]
+  - repo: https://github.com/koalaman/shellcheck-precommit
+    rev: v0.10.0
+    hooks:
+      - id: shellcheck
+        args: ["--severity=warning"]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0  # Use the ref you want to point at
+    hooks:
+      - id: check-vcs-permalinks
+      - id: check-yaml
+      - id: detect-aws-credentials
+      - id: trailing-whitespace

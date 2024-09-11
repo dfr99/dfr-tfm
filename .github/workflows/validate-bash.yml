@@ -1,0 +1,35 @@
+---
+name: 'Shell Check'
+
+on:
+  pull_request:
+    paths:
+      - '**/*.sh'
+
+env:
+  GH_PAT: ${{ secrets.GH_PAT }}
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    name: 'Shell Check'
+    runs-on: self-hosted
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        id: checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: 'Shell Check'
+        id: shellcheck
+        uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38
+        env:
+          SHELLCHECK_OPTS: '--color=never'
+        with:
+          severity: error
+          check_together: 'yes'

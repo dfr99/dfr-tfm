@@ -1,0 +1,63 @@
+---
+formatter: "markdown table"
+
+version: "0.18.0"
+
+header-from: "terraform.tf"
+footer-from: ""
+
+sections:
+  hide: []
+  show:
+    - header
+    - requirements
+    - providers
+    - modules
+    - resources
+    - inputs
+    - outputs
+
+content: |-
+  {{ .Header }}
+
+  {{ .Requirements }}
+
+  {{ .Providers }}
+
+  {{ .Modules }}
+
+  {{ .Resources }}
+
+  {{ .Inputs }}
+
+  {{ .Outputs }}
+
+output:
+  file: ""
+  mode: inject
+  template: |-
+    <!-- BEGIN_TF_DOCS -->
+    {{ .Content }}
+    <!-- END_TF_DOCS -->
+
+output-values:
+  enabled: false
+  from: ""
+
+sort:
+  enabled: true
+  by: name
+
+settings:
+  anchor: true
+  color: true
+  default: true
+  description: false
+  escape: true
+  hide-empty: false
+  html: false
+  indent: 2
+  lockfile: true
+  required: true
+  sensitive: true
+  type: true

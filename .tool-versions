@@ -1,1 +1,6 @@
 terraform 1.8.5
+nodejs 22.3.0
+terraform-docs 0.18.0
+yamllint 1.35.1
+checkov 3.2.217
+shellcheck 0.10.0
