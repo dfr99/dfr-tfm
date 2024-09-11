@@ -1,7 +1,0 @@
----
-config:
-  line-length: false
-  no-inline-html:
-    allowed_elements:
-      - a
-  no-bare-urls: false

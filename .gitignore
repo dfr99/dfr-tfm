@@ -32,19 +32,3 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
-
-# Plans folder
-**/plans/
-
-# Python virtual environment
-venv/
-
-# Certificates folder
-**/certs/*.csr
-**/certs/rootCA*
-
-# Checkov folder
-.external_modules
-
-# Docker env file
-.env
